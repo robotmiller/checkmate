@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+    <head>
+        <style>
+
+            /* Reset -- http://meyerweb.com/eric/tools/css/reset/ */
+            /* I don't use these elements:
+            applet, object, abbr, acronym, address, big, cite, del, dfn, ins, kbd, q, s, samp, strike, tt, var, b, u, i, center, dl, dt, dd, legend, caption, 
+            article, aside, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video
+            */
+            html, body, div, span, iframe, input, textarea, select, button,
+            h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+            a, code, em, img, small, strong, sub, sup,
+            ol, ul, li, fieldset, form, label, table,
+            tbody, tfoot, thead, tr, th, td, canvas {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                font-family: "trebuchet ms", Tahoma, sans-serif;
+                font-size: 13px;
+                vertical-align: baseline;
+                box-sizing: border-box;
+                outline: 0;
+            }
+            /* HTML5 display-role reset for older browsers */
+            /*
+            article, aside, details, figcaption, figure, 
+            footer, header, hgroup, menu, nav, section {
+                display: block;
+            }
+            */
+
+            body {
+                line-height: 1.4;
+                padding: 20px;
+            }
+            ol, ul {
+                list-style: none;
+            }
+            blockquote, q {
+                quotes: none;
+            }
+            blockquote:before, blockquote:after,
+            q:before, q:after {
+                content: '';
+                content: none;
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+            pre, code, textarea {
+                font-family: Consolas, monaco, "Courier New", monospace;
+            }
+            strong {
+                font-weight: bold;
+            }
+            em {
+                font-style: italic;
+            }
+            p, li {
+                margin: 15px 0;
+            }
+
+            body {
+                color: #222;
+                width: 400px;
+                height: 360px;
+            }
+
+            /* general styling */
+            input, select, textarea {
+                border: 1px solid #888;
+                border-radius: 3px;
+                box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
+                padding: 5px 8px;
+                width: 100%;
+                resize: none;
+            }
+            select {
+                padding-left: 6px;
+            }
+            textarea {
+                line-height: 16px;
+                resize: none;
+            }
+            input:focus, textarea:focus, select:focus {
+                border-color: #4a7;
+                box-shadow: rgba(128, 192, 128, 1) 0 2px 5px 1px;
+            }
+            input.error, textarea.error, select.error {
+                background: #fff4f4;
+                border-color: #c44;
+                box-shadow: rgba(224, 64, 64, 1) 0 2px 5px 1px;
+            }
+
+            .is-hidden {
+                display: none;
+            }
+            .center {
+                text-align: center;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 10px;
+            }
+            button {
+                border: 1px solid #444;
+                box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
+                outline: 0;
+                border-radius: 3px;
+                background: #40a070;
+                color: #fff;
+                padding: 7px 10px;
+                font-weight: bold;
+                position: relative;
+                cursor: pointer;
+            }
+            button:active {
+                background: #4a7;
+            }
+            button.warning {
+                background: #e07800;
+            }
+            button.warning:active {
+                background: #f80;
+            }
+            button.secondary {
+                background: #f8f8f8;
+                color: #000;
+            }
+            button.secondary:active {
+                background: #fff;
+            }
+
+            #manifest-code {
+                height: 200px;
+                overflow: auto;
+            }
+
+            #test-details {
+                min-height: 240px;
+            }
+            .test-title {
+                cursor: pointer;
+            }
+            .test-title:hover {
+                text-decoration: underline;
+            }
+            .step-icon {
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+                border-radius: 10px;
+                background: #ddd;
+                margin-left: 10px;
+                margin-bottom: 2px;
+                line-height: 16px;
+                text-align: center;
+                font-size: 11px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .step-icon + .step-icon {
+                margin-left: 4px;
+            }
+            .step-icon.fail {
+                background: #f80;
+                font-size: 12px;
+            }
+
+            #manifest-error {
+                color: #c44;
+            }
+            
+            .bottom-bar {
+                margin-bottom: 20px;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div id="test-form" class="is-hidden">
+            <label>
+                Enter the URL of your test manifest here:
+                <input type="text" id="manifest-url" placeholder="Paste the URL and press Enter to load the manifest" />
+            </label>
+            <label>
+                Or paste the manifest's code here:
+                <textarea id="manifest-code" wrap="off" autocomplete="off"></textarea>
+                <div id="manifest-error"></div>
+            </label>
+            <div class="center bottom-bar">
+                <button id="start-test">Start Test</button>
+            </div>
+        </div>
+        <div id="test-running" class="is-hidden">
+            <p id="test-status">
+                The test is in progress. Here are the results so far:
+            </p>
+            <div id="test-details"></div>
+            <div class="center bottom-bar">
+                <button id="close-popup" class="secondary">Close this popup</button>
+                <button id="start-new-test" class="is-hidden">Start another test</button>
+                <button id="stop-test" class="warning">Stop test</button>
+            </div>
+        </div>
+        <div id="loading">
+            Loading...
+        </div>
+        <script src="util.js"></script>
+        <script src="popup.js"></script>
+    </body>
+</html>

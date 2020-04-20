@@ -1,0 +1,32 @@
+{
+    "name": "Checkmate",
+    "version": "1.0",
+    "description": "test",
+    "permissions": ["tabs", "webNavigation"],
+    "background": {
+        "scripts": ["util.js", "background.js"],
+        "persistent": true
+    },
+    "browser_action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "32": "icon-32.png"
+        }
+    },
+    "icons": {
+        "32": "icon-32.png"
+    },
+    "content_scripts": [
+        {
+            "matches": ["*://*/*"],
+            "js": ["util.js", "content.js"]
+        },
+        {
+            "matches": ["*://*/*"],
+            "js": ["util.js", "all_frames.js"],
+            "all_frames": true
+        }
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
+    "manifest_version": 2
+}
