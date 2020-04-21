@@ -53,6 +53,15 @@ var STYLE = `
         flex-grow: 1;
     }
 
+    @keyframes rotating {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
     .cm_ui .title-bar {
         background: #40a070;
         border-radius: 2px 2px 0 0;
@@ -125,11 +134,22 @@ var STYLE = `
     .cm_ui [data-select] {
     }
     .cm_ui [data-minimize] {
+        line-height: 1;
         margin-right: 4px;
         font-weight: normal;
         cursor: pointer;
     }
+    .cm_ui [data-automatic] {
+        line-height: 1;
+        margin-right: 4px;
+        font-weight: normal;
+        cursor: pointer;
+    }
+    .cm_ui [data-automatic=true] {
+        animation: rotating 2s linear infinite;
+    }
     .cm_ui [data-lr-toggle] {
+        line-height: 1;
         font-weight: normal;
         cursor: pointer;
     }
@@ -310,6 +330,7 @@ function buildStepHtml() {
     // make icons for each step.
     html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
     html.push(`<span data-minimize="">&#128469;</span>`);
+    html.push(`<span data-automatic="${state.automatic}">&orarr;</span>`);
     html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
     html.push(`</div>`);
 
@@ -581,6 +602,41 @@ register("custom", function(instruction, setStatus) {
     }
 });
 
+function automaticLoop() {
+    if (document.hidden) {
+        return;
+    }
+    if (!state || !state.automatic) {
+        return;
+    }
+
+    // find the last instruction that's not in a state.
+    var test = state.tests[state.testIndex];
+    var step = test.steps[state.stepIndex];
+    for (var i = step.instructions.length - 1; i >= 0; i--) {
+        // if this one has no status and the previous is successful, try this one.
+        var curr = step.instructions[i];
+        var prev = step.instructions[i - 1];
+
+        // if the step has a status, that means the next instruction is running or failed.
+        if (curr.status) {
+            return;
+        }
+        // if we're at an instruction we don't know how to do, skip it.
+        if (!curr.canDo) {
+            continue;
+        }
+        // only try this instruction if the previous one was successful.
+        // if curr is the first instruction, prev will be null and that means we can try this.
+        if (!prev || prev.status == "success") {
+            doInstruction(i);
+            return;
+        }
+    }
+}
+
+setInterval(automaticLoop, 1000);
+
 function handleClick(event) {
     if (event.target.hasAttribute("data-do-it")) {
         // do nothing here, these are handled on mousedown now.
@@ -596,6 +652,10 @@ function handleClick(event) {
         uiElement.classList.toggle("left");
     } else if (event.target.hasAttribute("data-minimize")) {
         uiElement.classList.toggle("minimized");
+    } else if (event.target.hasAttribute("data-automatic")) {
+        state.automatic = !state.automatic;
+        syncState();
+        buildOrUpdateUI();
     } else if (event.target.hasAttribute("data-pass-step")) {
         var stepIndex = +event.target.getAttribute("data-pass-step");
         advanceStep(stepIndex, "pass");
