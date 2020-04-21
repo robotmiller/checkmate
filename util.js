@@ -5,6 +5,7 @@ var SWITCH_TAB = "SWITCH_TAB";
 var SET_STEP = "SET_STEP";
 var STOP_TEST = "STOP_TEST";
 var RUN_IN_FRAMES = "RUN_IN_FRAMES";
+var RELAY_TO_FRAMES = "RELAY_TO_FRAMES";
 
 function $(id) {
 	return document.getElementById(id);

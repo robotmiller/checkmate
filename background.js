@@ -73,6 +73,16 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         };
         sendResponse();
         updateAllTabs();
+    } else if (message.type == RELAY_TO_FRAMES) {
+        chrome.webNavigation.getAllFrames({ tabId: sender.tab.id }, function(frames) {
+            frames.forEach(function(frame) {
+                // if it's the top frame, do nothing, that's who sent us this message.
+                if (frame.parentFrameId == -1) {
+                    return;
+                }
+                chrome.tabs.sendMessage(sender.tab.id, message, { frameId: frame.frameId });
+            });
+        });
     } else if (message.type == RUN_IN_FRAMES) {
         // relay this to all frames within the tab that sent this message.
         // we use this when the top-level frame tried to execute something

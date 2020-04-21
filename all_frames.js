@@ -78,5 +78,14 @@ chrome.runtime.onMessage.addListener(function(message, sender, setStatus) {
 
         // call this to avoid an error message from being logged.
         setStatus(undefined);
+    } else if (message.type == RELAY_TO_FRAMES) {
+        var instruction = message.instruction;
+        if (instruction) {
+            if (message.highlight === true) {
+                highlight(instruction.selector, instruction.regex);
+            } else if (message.highlight === false) {
+                unhighlight(instruction.selector, instruction.regex);
+            }
+        }
     }
 });

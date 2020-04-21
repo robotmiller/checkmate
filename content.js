@@ -383,6 +383,22 @@ function register(type, func) {
     doers[type] = func;
 }
 
+function highlightInAllFrames(instruction) {
+    chrome.runtime.sendMessage({
+        type: RELAY_TO_FRAMES,
+        instruction: instruction,
+        highlight: true
+    });
+}
+
+function unhighlightInAllFrames(instruction) {
+    chrome.runtime.sendMessage({
+        type: RELAY_TO_FRAMES,
+        instruction: instruction,
+        highlight: false
+    });
+}
+
 function doInstruction(instructionIndex) {
     var testIndex = state.testIndex;
     var stepIndex = state.stepIndex;
@@ -616,8 +632,7 @@ function handleMouseOver(event) {
     if (event.target.hasAttribute("data-highlight")) {
         var instruction = getInstruction(+event.target.getAttribute("data-highlight"));
         highlight(instruction.selector, instruction.regex);
-        // var elements = document.querySelectorAll(selector);
-        // highlight(elements);
+        highlightInAllFrames(instruction);
     }
 }
 function handleMouseOut(event) {
@@ -628,9 +643,7 @@ function handleMouseOut(event) {
         }
         var instruction = getInstruction(+event.target.getAttribute("data-highlight"));
         unhighlight(instruction.selector, instruction.regex);
-        // var selector = decodeURIComponent(event.fromElement.getAttribute("data-highlight"));
-        // var elements = document.querySelectorAll(selector);
-        // unhighlight(elements);
+        unhighlightInAllFrames(instruction);
     }
 }
 
