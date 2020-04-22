@@ -42,7 +42,8 @@ test("AIS Text over LivePerson", () => {
 
     step("Start a chat", () => {
         newTab("https://powerful-hamlet-79700.herokuapp.com/liveperson");
-        click(".LPMcontainer", "the Live Chat button. If you don't see it, try refreshing");
+        click(".LPMcontainer", "the Live Chat button.");
+        note("If you don't see the button or it doesn't say 'Live Chat', try refreshing.");
         switchTab("liveperson.net", "LivePerson");
         click(".lpview_queue_orb.blink", "the accept button");
         switchTab("herokuapp.com", "chat");

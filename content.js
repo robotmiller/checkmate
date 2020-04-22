@@ -105,6 +105,10 @@ var STYLE = `
         padding: 10px;
         border-bottom: 1px solid #ddd;
     }
+    .cm_ui .instruction .note {
+        font-size: 12px;
+        color: #777;
+    }
     .cm_ui [data-copy] {
         background: #e8e8f8;
         color: #000;
@@ -254,6 +258,7 @@ function buildInstructionHtml(instruction, index) {
     var selector = instruction.selector;
     var label = instruction.label;
     var text = instruction.text;
+
 	if (type == "navigate") {
         content = `Navigate to <a href="${url}" onclick="return false;">${formatUrl(url)}</a>`;
     } else if (type == "new-tab") {
@@ -278,6 +283,8 @@ function buildInstructionHtml(instruction, index) {
 
     var highlightAttr = selector ? `data-highlight="${index}"` : "";
 
+    var note = instruction.note ? `<br/><span class="note">${instruction.note}</span>` : "";
+
     var doitLabel = "do it";
     var doitClass = "";
     if (status == "running") {
@@ -291,7 +298,7 @@ function buildInstructionHtml(instruction, index) {
         doitClass = "manual";
     }
 	var doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
-	return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}</span>${doIt}</div>` : "";
+	return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
 }
 
 function makeStepIcon(step, index) {
@@ -606,8 +613,10 @@ function handleClick(event) {
             }, 800);
         }
     } else if (event.target.hasAttribute("data-lr-toggle")) {
+        // todo: make this persist through page refreshes.
         uiElement.classList.toggle("left");
     } else if (event.target.hasAttribute("data-minimize")) {
+        // todo: make this persist through page refreshes.
         uiElement.classList.toggle("minimized");
     } else if (event.target.hasAttribute("data-automatic")) {
         state.automatic = !state.automatic;

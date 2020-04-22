@@ -176,6 +176,13 @@ function observe(text, selector, label) {
     _instructions.push(instruction);
 }
 
+function note(text) {
+    var lastInstruction = _instructions[_instructions.length - 1];
+    if (lastInstruction) {
+        lastInstruction.note = text;
+    }
+}
+
 function findElement(selector, regex, label) {
     // if you only provided two args, treat them as a selector and label.
     if (typeof label == "undefined") {
