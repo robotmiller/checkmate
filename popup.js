@@ -180,6 +180,10 @@ function note(text) {
     var lastInstruction = _instructions[_instructions.length - 1];
     if (lastInstruction) {
         lastInstruction.note = text;
+    } else {
+        // if this is the first instruction in a step, then this is essentially
+        // a custom step where the note's text _is_ the instruction.
+        custom(text);
     }
 }
 
