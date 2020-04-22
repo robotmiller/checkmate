@@ -70,38 +70,37 @@ chrome.runtime.sendMessage({ type: GET_STATE }, gotNewData);
 var _tests, _test, _instructions;
 
 function test(title, func) {
-	_test = {
-		title: title,
-		steps: []
+    _test = {
+        title: title,
+        steps: []
     };
     _tests.push(_test);
-	func();
-	// $("output").innerHTML = buildStepHtml(_test, 0);
+    func();
 }
-	
+    
 function step(title, func) {
-	_instructions = [];
-	func();
-	_test.steps.push({
-		title: title,
-		instructions: _instructions
-	});
+    _instructions = [];
+    func();
+    _test.steps.push({
+        title: title,
+        instructions: _instructions
+    });
 }
 
 function navigate(url) {
-	_instructions.push({
-		type: "navigate",
+    _instructions.push({
+        type: "navigate",
         url: url,
         canDo: true
-	});
+    });
 }
 
 function newTab(url) {
-	_instructions.push({
-		type: "new-tab",
+    _instructions.push({
+        type: "new-tab",
         url: url,
         canDo: true
-	});
+    });
 }
 
 function switchTab(url, label) {
@@ -114,15 +113,15 @@ function switchTab(url, label) {
 }
 
 function type(text, selector, label) {
-	_instructions.push({
-		type: "type",
-		text: text,
-		selector: selector,
+    _instructions.push({
+        type: "type",
+        text: text,
+        selector: selector,
         label: label || "",
         // you don't have to provide a selector here. if you only give us a label
         // we'll say "enter 'whatever' in the {label}" so you'll have to do it manually.
         canDo: !!selector
-	});
+    });
 }
 
 function custom(text, func) {
@@ -149,10 +148,10 @@ function click(selector, regex, label) {
         label = regex;
         regex = undefined;
     }
-	var instruction = {
-		type: "click",
-		selector: selector,
-		label: label || "",
+    var instruction = {
+        type: "click",
+        selector: selector,
+        label: label || "",
         canDo: true
     };
     if (regex) {

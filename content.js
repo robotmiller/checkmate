@@ -25,7 +25,7 @@ var STYLE = `
         border-radius: 3px;
         box-shadow: rgba(0, 0, 0, 0.5) 0 2px 10px;
         font-size: 13px;
-        z-index: 99999999;
+        z-index: 2147483647;
     }
     .cm_ui.left {
         right: initial;
@@ -259,18 +259,18 @@ function buildInstructionHtml(instruction, index) {
     var label = instruction.label;
     var text = instruction.text;
 
-	if (type == "navigate") {
+    if (type == "navigate") {
         content = `Navigate to <a href="${url}" onclick="return false;">${formatUrl(url)}</a>`;
     } else if (type == "new-tab") {
         content = `Open <a href="${url}" onclick="return false;">${formatUrl(url)}</a> in a new tab.`;
     } else if (type == "switch-tab") {
         content = `Switch to the ${label || url} tab.`;
-	} else if (type == "type") {
-		content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}.`;
-	} else if (type == "click") {
-		content = `Click on ${makeSelectBlock(selector, label)}.`;
+    } else if (type == "type") {
+        content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}.`;
+    } else if (type == "click") {
+        content = `Click on ${makeSelectBlock(selector, label)}.`;
     } else if (type == "custom") {
-		content = text;
+        content = text;
     } else if (type == "observe") {
         if (selector || label) {
             content = `Find the text ${makeCopyBlock(text)} in ${makeSelectBlock(selector, label)}.`;
@@ -297,8 +297,8 @@ function buildInstructionHtml(instruction, index) {
         doitLabel = "?";
         doitClass = "manual";
     }
-	var doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
-	return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
+    var doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
+    return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
 }
 
 function makeStepIcon(step, index) {
@@ -328,7 +328,7 @@ function buildStepHtml() {
     if (!step) {
         return "";
     }
-	
+    
     var html = [];
 
     // make the title bar:
@@ -341,11 +341,11 @@ function buildStepHtml() {
     html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
     html.push(`</div>`);
 
-	html.push(`<div class="current-step">`);
-	// html.push(`<div class="step-title">${step.title}</div>`);
-	
-	step.instructions.forEach((instruction, index) => {
-		html.push(buildInstructionHtml(instruction, index));
+    html.push(`<div class="current-step">`);
+    // html.push(`<div class="step-title">${step.title}</div>`);
+    
+    step.instructions.forEach((instruction, index) => {
+        html.push(buildInstructionHtml(instruction, index));
     });
     
     // add buttons to either pass or fail this step.
@@ -356,10 +356,10 @@ function buildStepHtml() {
     html.push(`<button class="big" data-pass-step="${stepIndex}">pass</button>`);
     html.push(`<button class="big" data-fail-step="${stepIndex}">fail</button>`);
     html.push(`</div>`);
-	
-	html.push(`</div>`);
-	
-	return html.join("");
+    
+    html.push(`</div>`);
+    
+    return html.join("");
 }
 
 var uiElement, state;

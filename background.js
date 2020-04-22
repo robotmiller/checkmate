@@ -102,22 +102,18 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                     return;
                 }
                 messagesSent += 1;
-                chrome.tabs.sendMessage(
-                    sender.tab.id,
-                    message, 
-                    { frameId: frame.frameId },
-                    function(status) {
-                        // all_frames.js has to send a response otherwise there's an error printed in
-                        // the background tab. if it's successful it'll include a status, otherwise
-                        // it'll pass `undefined`.
-                        if (!status) {
-                            return;
-                        }
-                        
-                        clearTimeout(timeout);
-                        setStatus(status);
+                chrome.tabs.sendMessage(sender.tab.id, message, { frameId: frameId }, function(status) {
+                    // all_frames.js has to send a response otherwise there's an error printed in
+                    // the background tab. if it's successful it'll include a status, otherwise
+                    // it'll pass `undefined`.
+                    if (!status) {
+                        return;
                     }
-                );
+                    
+                    clearTimeout(timeout);
+                    setStatus(status);
+                });
+                
             });
 
             // if there's at least one iframe to try this in, wait up to 500ms to see if it succeeds.

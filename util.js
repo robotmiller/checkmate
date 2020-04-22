@@ -8,7 +8,7 @@ var RUN_IN_FRAMES = "RUN_IN_FRAMES";
 var RELAY_TO_FRAMES = "RELAY_TO_FRAMES";
 
 function $(id) {
-	return document.getElementById(id);
+    return document.getElementById(id);
 }
 
 Object.defineProperty(RegExp.prototype, "toJSON", {
@@ -141,7 +141,6 @@ function typeInElement(text, element) {
     var enterRegex = /\{enter\}$/i;
     var doPressEnter = enterRegex.test(text);
     text = text.replace(enterRegex, "");
-    console.log("type " + text + " in", element);
 
     if (!element) {
         return false;
@@ -150,7 +149,9 @@ function typeInElement(text, element) {
     if (element.hasAttribute("contenteditable")) {
         element.innerHTML = text;
         if (doPressEnter) {
-            pressEnter(element);
+            setTimeout(function() {
+                pressEnter(element);
+            }, 0);
         }
     } else {
         // from: https://github.com/facebook/react/issues/10135#issuecomment-314441175
@@ -178,7 +179,9 @@ function typeInElement(text, element) {
             })
         );
         if (doPressEnter) {
-            pressEnter(element);
+            setTimeout(function() {
+                pressEnter(element);
+            }, 0);
         }
     }
     return true;
