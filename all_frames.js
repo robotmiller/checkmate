@@ -16,32 +16,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, setStatus) {
         } else if (instruction.type == "type") {
             // todo: wait up to a few seconds for this element to exist.
             var element = document.querySelector(instruction.selector);
-            if (element) {
-                // from: https://github.com/facebook/react/issues/10135#issuecomment-314441175
-                var valueProp = Object.getOwnPropertyDescriptor(element, "value");
-                var prototype = Object.getPrototypeOf(element);
-                var prototypeValueProp = Object.getOwnPropertyDescriptor(
-                    prototype,
-                    "value"
-                );
-                var valueSetter = valueProp && valueProp.set;
-                var prototypeValueSetter = prototypeValueProp && prototypeValueProp.set;
-
-                if (valueSetter && valueSetter !== prototypeValueSetter) {
-                    prototypeValueSetter.call(element, instruction.text);
-                } else if (valueSetter) {
-                    valueSetter.call(element, instruction.text);
-                } else {
-                    element.value = instruction.text;
-                }
-
-                element.dispatchEvent(
-                    new Event("input", {
-                        bubbles: true,
-                        target: element
-                    })
-                );
-                return setStatus("success");
+            if (typeInElement(instruction.text, element)) {
+                setStatus("success");
             }
         } else if (instruction.type == "find-element") {
             // todo: make this try for 5-10 seconds.
@@ -54,7 +30,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, setStatus) {
             if (instruction.selector) {
                 var elements = document.querySelectorAll(instruction.selector);
                 var element = Array.from(elements).find(function(el) {
-                    return isStringMatch(el.textContent, instruction.text);
+                    return doesContainString(el.textContent, instruction.text);
                 });
                 if (element) {
                     highlight(element);
@@ -68,7 +44,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, setStatus) {
                     if (element.parentNode.closest(".cm_ui")) {
                         continue;
                     }
-                    if (isStringMatch(element.textContent, instruction.text)) {
+                    if (doesContainString(element.textContent, instruction.text)) {
                         highlight(element.parentNode);
                         return setStatus("success");
                     }

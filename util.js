@@ -69,6 +69,121 @@ function findElements(selector, regex) {
     });
 }
 
+// todo: this is very similar to findElement, figure out if we need both.
+function findElementWithText(selector, text) {
+    if (selector) {
+        var elements = document.querySelectorAll(selector);
+        var element = Array.from(elements).find(function(el) {
+            return doesContainString(el.textContent, text);
+        });
+        if (element) {
+            return element;
+        }
+    } else {
+        var elements = document.evaluate(".//text()", document.body, null, XPathResult.ANY_TYPE, null); 
+        var element;
+        while (element = elements.iterateNext()) {
+            // if it's inside the checkmate UI, skip it.
+            if (element.parentNode.closest(".cm_ui")) {
+                continue;
+            }
+            if (doesContainString(element.textContent, text)) {
+                return element.parentNode;
+            }
+        }
+    }
+}
+
+function pressEnter(element) {
+    ["keydown", "keypress", "keyup"].forEach(function(eventType) {
+        element.dispatchEvent(
+            new KeyboardEvent(eventType, {
+                code: "Enter",
+                key: "Enter",
+                keyCode: 13,
+                altKey: false,
+                bubbles: true,
+                cancelBubble: false,
+                cancelable: true,
+                charCode: 0,
+                composed: true,
+                ctrlKey: false,
+                currentTarget: null,
+                defaultPrevented: false,
+                detail: 0,
+                eventPhase: 0,
+                explicitOriginalTarget: element,
+                isComposing: false,
+                isTrusted: true,
+                layerX: 0,
+                layerY: 0,
+                location: 0,
+                metaKey: false,
+                originalTarget: element,
+                rangeOffset: 0,
+                rangeParent: null,
+                repeat: false,
+                returnValue: true,
+                shiftKey: false,
+                srcElement: element,
+                target: element,
+                timeStamp: 44355,
+                type: eventType,
+                which: 13
+            })
+        );
+    });
+}
+
+function typeInElement(text, element) {
+    // if the text ends with "{Enter}", that means we type the
+    // text before it then dispatch an keyboard event.
+    var enterRegex = /\{enter\}$/i;
+    var doPressEnter = enterRegex.test(text);
+    text = text.replace(enterRegex, "");
+    console.log("type " + text + " in", element);
+
+    if (!element) {
+        return false;
+    }
+
+    if (element.hasAttribute("contenteditable")) {
+        element.innerHTML = text;
+        if (doPressEnter) {
+            pressEnter(element);
+        }
+    } else {
+        // from: https://github.com/facebook/react/issues/10135#issuecomment-314441175
+        var valueProp = Object.getOwnPropertyDescriptor(element, "value");
+        var prototype = Object.getPrototypeOf(element);
+        var prototypeValueProp = Object.getOwnPropertyDescriptor(
+            prototype,
+            "value"
+        );
+        var valueSetter = valueProp && valueProp.set;
+        var prototypeValueSetter = prototypeValueProp && prototypeValueProp.set;
+
+        if (valueSetter && valueSetter !== prototypeValueSetter) {
+            prototypeValueSetter.call(element, text);
+        } else if (valueSetter) {
+            valueSetter.call(element, text);
+        } else {
+            element.value = text;
+        }
+
+        element.dispatchEvent(
+            new Event("input", {
+                bubbles: true,
+                target: element
+            })
+        );
+        if (doPressEnter) {
+            pressEnter(element);
+        }
+    }
+    return true;
+}
+
 function copyText(text) {
     var textarea = document.createElement("textarea");
     textarea.value = text;
@@ -92,8 +207,8 @@ function copyText(text) {
     return successful;
 }
 
-function isStringMatch(a, b) {
-    a = a || "";
-    b = b || "";
-    return a.toLowerCase().includes(b.toLowerCase());
+function doesContainString(a, b) {
+    a = (a || "").toLowerCase();
+    b = (b || "").toLowerCase();
+    return a.includes(b);
 }

@@ -487,34 +487,10 @@ register("switch-tab", function(instruction, setStatus, instructionIndex) {
 register("type", function(instruction, setStatus, _, tryInAllFrames) {
     // todo: wait up to a few seconds for this element to exist.
     var element = document.querySelector(instruction.selector);
-    if (element) {
-        // from: https://github.com/facebook/react/issues/10135#issuecomment-314441175
-        var valueProp = Object.getOwnPropertyDescriptor(element, "value");
-        var prototype = Object.getPrototypeOf(element);
-        var prototypeValueProp = Object.getOwnPropertyDescriptor(
-            prototype,
-            "value"
-        );
-        var valueSetter = valueProp && valueProp.set;
-        var prototypeValueSetter = prototypeValueProp && prototypeValueProp.set;
 
-        if (valueSetter && valueSetter !== prototypeValueSetter) {
-            prototypeValueSetter.call(element, instruction.text);
-        } else if (valueSetter) {
-            valueSetter.call(element, instruction.text);
-        } else {
-            element.value = instruction.text;
-        }
-
-        element.dispatchEvent(
-            new Event("input", {
-                bubbles: true,
-                target: element
-            })
-        );
+    if (typeInElement(instruction.text, element)) {
         setStatus("success");
     } else {
-        // setStatus("failed");
         tryInAllFrames();
     }
 });
@@ -537,44 +513,22 @@ register("click", function(instruction, setStatus, _, tryInAllFrames) {
 
 register("observe", function(instruction, setStatus, _, tryInAllFrames) {
     // todo: try this for a little while before failing.
-    if (instruction.selector) {
-        var elements = document.querySelectorAll(instruction.selector);
-        var element = Array.from(elements).find(function(el) {
-            return isStringMatch(el.textContent, instruction.text);
-        });
-        if (element) {
-            highlight(element);
-            setStatus("success");
-        } else {
-            tryInAllFrames();
-            // setStatus("failed");
-        }
+    var element = findElementWithText(instruction.selector, instruction.text);
+    if (element) {
+        highlight(element);
+        setStatus("success");
     } else {
-        var elements = document.evaluate(".//text()", document.body, null, XPathResult.ANY_TYPE, null); 
-        var element;
-        while (element = elements.iterateNext()) {
-            // if it's inside the checkmate UI, skip it.
-            if (element.parentNode.closest(".cm_ui")) {
-                continue;
-            }
-            if (isStringMatch(element.textContent, instruction.text)) {
-                highlight(element.parentNode);
-                setStatus("success");
-                return;
-            }
-        }
         tryInAllFrames();
-        // setStatus("failed");
     }
 });
 
-register("find-element", function(instruction, setStatus) {
+register("find-element", function(instruction, setStatus, _, tryInAllFrames) {
     // todo: make this try for 5-10 seconds.
     var element = findElement(instruction.selector, instruction.regex);
     if (element) {
         setStatus("success");
     } else {
-        setStatus("failed");
+        tryInAllFrames();
     }
 });
 
@@ -602,7 +556,9 @@ register("custom", function(instruction, setStatus) {
     }
 });
 
-function automaticLoop() {
+// this loop is always running but if the tab is hidden or automation
+// is turned off, it'll just do nothing each time.
+setInterval(function() {
     if (document.hidden) {
         return;
     }
@@ -610,7 +566,10 @@ function automaticLoop() {
         return;
     }
 
-    // find the last instruction that's not in a state.
+    // find the next instruction that can be executed. consider each of these:
+    //  - the next instruction may already be running.
+    //  - the next instruction might be one we can't automate.
+    //  - the next instruction can only run if the previous one succeeded.
     var test = state.tests[state.testIndex];
     var step = test.steps[state.stepIndex];
     for (var i = step.instructions.length - 1; i >= 0; i--) {
@@ -633,9 +592,7 @@ function automaticLoop() {
             return;
         }
     }
-}
-
-setInterval(automaticLoop, 1000);
+}, 1000);
 
 function handleClick(event) {
     if (event.target.hasAttribute("data-do-it")) {

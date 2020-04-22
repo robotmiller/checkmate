@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         // the message includes a url fragment, find the first tab that matches it.
         chrome.tabs.query({}, function(tabs) {
             for (var i = 0; i < tabs.length; i++) {
-                if (tabs[i].url.toLowerCase().includes(message.url.toLowerCase())) {
+                if (doesContainString(tabs[i].url, message.url)) {
                     chrome.tabs.highlight({
                         windowId: tabs[i].windowId,
                         tabs: [tabs[i].index],
@@ -89,17 +89,19 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         // (e.g. click on an element) but couldn't find it, we ask all frames
         // on the page to try it and see if any of them succeed.
         chrome.webNavigation.getAllFrames({ tabId: sender.tab.id }, function(frames) {
-            // if we don't hear back in 2 seconds, fail the step.
-            var timeout = setTimeout(function() {
-                state.tests[message.testIndex].steps[message.stepIndex].instructions[message.instructionIndex].status = "failed";
+            var timeout;
+            var setStatus = function(status) {
+                state.tests[message.testIndex].steps[message.stepIndex].instructions[message.instructionIndex].status = status;
                 updateAllTabs();
-            }, 2000);
+            };
 
+            var messagesSent = 0;
             frames.forEach(function(frame) {
                 // if it's the top frame, do nothing, that's who sent us this message.
                 if (frame.parentFrameId == -1) {
                     return;
                 }
+                messagesSent += 1;
                 chrome.tabs.sendMessage(
                     sender.tab.id,
                     message, 
@@ -113,11 +115,20 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                         }
                         
                         clearTimeout(timeout);
-                        state.tests[message.testIndex].steps[message.stepIndex].instructions[message.instructionIndex].status = status;
-                        updateAllTabs();
+                        setStatus(status);
                     }
                 );
             });
+
+            // if there's at least one iframe to try this in, wait up to 500ms to see if it succeeds.
+            // if there were no iframes, we know right away that this failed.
+            if (messagesSent) {
+                timeout = setTimeout(function() {
+                    setStatus("failed");
+                }, 500);
+            } else {
+                fail();
+            }
         });
     }
 });
