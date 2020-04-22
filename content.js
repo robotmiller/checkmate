@@ -329,7 +329,7 @@ function buildStepHtml() {
     html.push(`<span>${test.title}</span>`);
     // make icons for each step.
     html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
-    html.push(`<span data-minimize="">&#128469;</span>`);
+    html.push(`<span data-minimize="">_</span>`);
     html.push(`<span data-automatic="${state.automatic}">&orarr;</span>`);
     html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
     html.push(`</div>`);
