@@ -81,8 +81,8 @@ function getSelector(element) {
 
 function findSelector(element) {
     var selectors = [];
-    var maxWidth = Math.max(element.offsetWidth * 1.5, element.offsetWidth + 20);
-    var maxHeight = Math.max(element.offsetHeight * 1.5, element.offsetHeight + 20);
+    var maxWidth = Math.max(element.offsetWidth * 1.5, element.offsetWidth + 40);
+    var maxHeight = Math.max(element.offsetHeight * 1.5, element.offsetHeight + 40);
 
     while (element) {
         // if the page has HTML like this:
@@ -118,6 +118,7 @@ function findSelector(element) {
 
 document.body.addEventListener("contextmenu", function(event) {
     if (event.ctrlKey && event.altKey) {
+        // todo: figure out why this doesn't work on button elements.
         var selector = findSelector(event.target);
         if (selector) {
             copyText(selector);
