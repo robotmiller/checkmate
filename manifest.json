@@ -10,11 +10,13 @@
     "browser_action": {
         "default_popup": "popup.html",
         "default_icon": {
-            "32": "icon-32.png"
+            "32": "circle-icon-32.png"
         }
     },
     "icons": {
-        "32": "icon-32.png"
+        "16": "circle-icon-16.png",
+        "48": "circle-icon-48.png",
+        "128": "circle-icon-128.png"
     },
     "content_scripts": [
         {
