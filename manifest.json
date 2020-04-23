@@ -22,12 +22,13 @@
         {
             "matches": ["*://*/*"],
             "run_at": "document_end",
-            "js": ["util.js", "content.js"]
+            "js": ["util.js", "content.js", "inspector.js"],
+            "css": ["style.css"]
         },
         {
             "matches": ["*://*/*"],
             "run_at": "document_end",
-            "js": ["util.js", "all_frames.js"],
+            "js": ["util.js", "all_frames.js", "inspector.js"],
             "match_about_blank": true,
             "all_frames": true
         }
