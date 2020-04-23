@@ -16,10 +16,15 @@ function showSelector(element, selector) {
     var x = rects[0].x;
     var y = rects[0].y;
 
+    var labelY = y - 18;
+    if (labelY < 0) {
+        labelY += 18 + rects[0].height;
+    }
+
     var div = document.createElement("div");
     div.style.position = "fixed";
     div.style.left = (x - 4) + "px";
-    div.style.top = (y - 18) + "px";
+    div.style.top = labelY + "px";
     div.style.background = "#40a070";
     div.style.color = "#fff";
     div.style.fontFamily = "monaco, consolas, 'courier new', monospace";
