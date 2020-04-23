@@ -102,7 +102,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                     return;
                 }
                 messagesSent += 1;
-                chrome.tabs.sendMessage(sender.tab.id, message, { frameId: frameId }, function(status) {
+                chrome.tabs.sendMessage(sender.tab.id, message, { frameId: frame.frameId }, function(status) {
                     // all_frames.js has to send a response otherwise there's an error printed in
                     // the background tab. if it's successful it'll include a status, otherwise
                     // it'll pass `undefined`.

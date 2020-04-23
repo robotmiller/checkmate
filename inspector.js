@@ -38,6 +38,9 @@ function showSelector(element, selector) {
 
 function getSelector(element) {
     if (element.id) {
+        // we need to escape certain symbols from IDs otherwise
+        // id="a.b" becomes #a.b which means something else.
+        var id = element.id.replace(/([:.>~+])/g, "\\$0");
         return "#" + element.id;
     }
     var mostUniqueClass = "";
