@@ -36,18 +36,23 @@ function showSelector(element, selector) {
     }, HIGHLIGHT_DURATION);
 }
 
+function attrSelector(attr, value, operation) {
+    operation = operation || "="
+    return `[${attr}${operation}"${value.replace(/"/g, "\\\"")}"]`;
+}
+
 function getSelector(element) {
     if (element.id) {
         // we need to escape certain symbols from IDs otherwise
         // id="a.b" becomes #a.b which means something else.
-        var id = element.id.replace(/([:.>~+])/g, "\\$0");
-        return "#" + element.id;
+        var id = element.id.replace(/([:.>~+" ])/g, "\\$1");
+        return "#" + id;
     }
     var mostUniqueClass = "";
     var mostUniqueClassMatches = 9999999;
     for (var i = 0; i < element.classList.length; i++) {
         var matches = document.getElementsByClassName(element.classList[i]).length;
-        if (matches > mostUniqueClassMatches) {
+        if (matches < mostUniqueClassMatches) {
             mostUniqueClassMatches = matches;
             mostUniqueClass = element.classList[i];
         }
@@ -57,24 +62,24 @@ function getSelector(element) {
     }
 
     if (element.hasAttribute("name")) {
-        return `[name="${element.getAttribute("name")}"]`;
+        return attrSelector("name", element.getAttribute("name"));
     } else if (element.hasAttribute("data-testid")) {
-        return `[name="${element.getAttribute("data-testid")}"]`;
+        return attrSelector("data-testid", element.getAttribute("data-testid"));
     } else if (element.hasAttribute("data-qa")) {
-        return `[name="${element.getAttribute("data-qa")}"]`;
+        return attrSelector("data-qa", element.getAttribute("data-qa"));
     } else if (element.hasAttribute("role")) {
-        return `[name="${element.getAttribute("role")}"]`;
+        return attrSelector("role", element.getAttribute("role"));
     } else if (element.hasAttribute("href")) {
         // look for a unique part of the selector.
         var route = element.getAttribute("href").split("?")[0];
         var parts = route.split("/");
         for (var i = 0; i < parts.length; i++) {
             var href = parts.slice(parts.length - i - 1).join("/");
-            var selector = `[href$="${href}"]`;
+            var selector = attrSelector("href", href, "$=");
             if (isUnique(selector)) {
                 return selector;
             }
-            selector = `[href*="${href}"]`;
+            selector = attrSelector("href", href, "*=");
             if (isUnique(selector)) {
                 return selector;
             }
@@ -97,6 +102,13 @@ function findSelector(element) {
         // ancestor is acceptable is if it's a similar size. once we reach an ancestor
         // that's much bigger than the element you clicked on, we stop.
         if (element.offsetWidth > maxWidth || element.offsetHeight > maxHeight) {
+            // todo: fix a but with this size check...
+            // if the current element is close in size to the original one, then the current
+            // element is considered equivalent to it -- selecting it uniquely is as good as
+            // selecting the original.
+            // but, there's a chance the original element can't be identified but the combination
+            // of its selector plus a larger parent together uniquely identify the original element.
+            // because we break here, we never consider that possibility.
             break;
         }
         var selector = getSelector(element);
