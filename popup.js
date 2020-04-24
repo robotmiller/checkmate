@@ -113,6 +113,12 @@ function switchTab(url, label) {
 }
 
 function type(text, selector, label) {
+    // if the text ends with "{Enter}", that means we type the
+    // text before it then dispatch an keyboard event.
+    var enterRegex = /\{enter\}$/i;
+    var doPressEnter = enterRegex.test(text);
+    text = text.replace(enterRegex, "");
+
     _instructions.push({
         type: "type",
         text: text,
@@ -120,7 +126,8 @@ function type(text, selector, label) {
         label: label || "",
         // you don't have to provide a selector here. if you only give us a label
         // we'll say "enter 'whatever' in the {label}" so you'll have to do it manually.
-        canDo: !!selector
+        canDo: !!selector,
+        doPressEnter: doPressEnter
     });
 }
 

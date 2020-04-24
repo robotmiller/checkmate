@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, setStatus) {
         } else if (instruction.type == "type") {
             // todo: wait up to a few seconds for this element to exist.
             var element = document.querySelector(instruction.selector);
-            if (typeInElement(instruction.text, element)) {
+            if (typeInElement(instruction.text, element, instruction.doPressEnter)) {
                 setStatus("success");
             }
         } else if (instruction.type == "find-element") {

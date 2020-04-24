@@ -135,13 +135,7 @@ function pressEnter(element) {
     });
 }
 
-function typeInElement(text, element) {
-    // if the text ends with "{Enter}", that means we type the
-    // text before it then dispatch an keyboard event.
-    var enterRegex = /\{enter\}$/i;
-    var doPressEnter = enterRegex.test(text);
-    text = text.replace(enterRegex, "");
-
+function typeInElement(text, element, doPressEnter) {
     if (!element) {
         return false;
     }

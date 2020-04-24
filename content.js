@@ -40,7 +40,8 @@ function buildInstructionHtml(instruction, index) {
     } else if (type == "switch-tab") {
         content = `Switch to the ${label || url} tab.`;
     } else if (type == "type") {
-        content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}.`;
+        var pressEnter = instruction.doPressEnter ? " and press Enter" : "";
+        content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}${pressEnter}.`;
     } else if (type == "click") {
         content = `Click on ${makeSelectBlock(selector, label)}.`;
     } else if (type == "custom") {
@@ -269,7 +270,7 @@ register("type", function(instruction, setStatus, _, tryInAllFrames) {
     // todo: wait up to a few seconds for this element to exist.
     var element = document.querySelector(instruction.selector);
 
-    if (typeInElement(instruction.text, element)) {
+    if (typeInElement(instruction.text, element, instruction.doPressEnter)) {
         setStatus("success");
     } else {
         tryInAllFrames();

@@ -14,10 +14,8 @@ function openGuruExtension() {
 test("AIS Text over Gmail", () => {
     step("Sign into Gmail", () => {
         navigate("https://mail.google.com");
-        type("guru.rainforest@gmail.com", "#identifierId", "email field");
-        click("#identifierNext", "the next button");
-        type("1234ABCD", "input[type=password]", "password field");
-        click("#passwordNext", "the next button");
+        type("guru.rainforest@gmail.com{Enter}", "#identifierId", "email field");
+        type("1234ABCD{Enter}", "input[type=password]", "password field");
     });
 
     step("Check AIS Text", () => {
