@@ -28,7 +28,7 @@ function showSelector(element, selector) {
     div.style.background = "#40a070";
     div.style.color = "#fff";
     div.style.fontFamily = "monaco, consolas, 'courier new', monospace";
-    div.style.fontSize = "12px";
+    div.style.fontSize = "11px";
     div.style.padding = "2px 4px";
     div.style.border = "0";
     div.style.borderRadius = "3px";
