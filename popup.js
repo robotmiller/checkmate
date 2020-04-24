@@ -336,7 +336,7 @@ $("stop-test").onclick = $("start-new-test").onclick = function() {
     });
 };
 
-$("close-popup").onclick = function() {
+$("close-popup1").onclick = $("close-popup2").onclick = function() {
     window.close();
 };
 
