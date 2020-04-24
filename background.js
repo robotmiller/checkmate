@@ -123,7 +123,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                     setStatus("failed");
                 }, 500);
             } else {
-                fail();
+                setStatus("failed");
             }
         });
     }
