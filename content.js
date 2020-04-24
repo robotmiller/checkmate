@@ -34,9 +34,9 @@ function buildInstructionHtml(instruction, index) {
     var text = instruction.text;
 
     if (type == "navigate") {
-        content = `Navigate to <a href="${url}" onclick="return false;">${formatUrl(url)}</a>`;
+        content = `Navigate to <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a>`;
     } else if (type == "new-tab") {
-        content = `Open <a href="${url}" onclick="return false;">${formatUrl(url)}</a> in a new tab.`;
+        content = `Open <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a> in a new tab.`;
     } else if (type == "switch-tab") {
         content = `Switch to the ${label || url} tab.`;
     } else if (type == "type") {

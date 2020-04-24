@@ -87,19 +87,25 @@ function step(title, func) {
     });
 }
 
-function navigate(url) {
+function navigate(url, label) {
+    // remove trailing slashes.
+    url = url.replace(/\/$/, "");
     _instructions.push({
         type: "navigate",
         url: url,
-        canDo: true
+        canDo: true,
+        label: label
     });
 }
 
-function newTab(url) {
+function newTab(url, label) {
+    // remove trailing slashes.
+    url = url.replace(/\/$/, "");
     _instructions.push({
         type: "new-tab",
         url: url,
-        canDo: true
+        canDo: true,
+        label: label
     });
 }
 
