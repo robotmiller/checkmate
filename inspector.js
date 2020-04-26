@@ -94,7 +94,7 @@ function getSelector(element) {
     }
 }
 
-function findSelector(element) {
+function generateSelector(element) {
     var selectors = [];
     var maxWidth = Math.max(element.offsetWidth * 1.5, element.offsetWidth + 40);
     var maxHeight = Math.max(element.offsetHeight * 1.5, element.offsetHeight + 40);
@@ -124,9 +124,40 @@ function findSelector(element) {
     }
 }
 
+function generateLabel(element) {
+    var isInput = element.matches("input, textarea") && !/submit|button/i.test(element.getAttribute("type"));
+
+    function normalizeWhitespace(text) {
+        return text.replace(/\n|\r|\t/g, " ").replace(/_/g, " ").replace(/\s+/g, " ").trim();
+    }
+    function quoteIfNeeded(label) {
+        return label.includes(" ") ? `'${label}'` : label;
+    }
+
+    if (isInput) {
+        var label = element.getAttribute("placeholder") || element.getAttribute("name");
+        if (label) {
+            label = normalizeWhitespace(label);
+            return `${quoteIfNeeded(label)} field`;
+        }
+    } else {
+        var isTab = element.matches("[role=tab], [role=tab] *, [class*=tab], [class*=tab] *");
+        var isButton = element.matches("input[type=submit], input[type=button], button, button *, [role=button], [role=button] *");
+        var isLink = element.matches("a, a *");
+
+        if (isTab) {
+            return `${quoteIfNeeded(element.innerText)} tab`;
+        } else if (isButton) {
+            return `${quoteIfNeeded(element.innerText)} button`;
+        } else if (isLink) {
+            return `${quoteIfNeeded(element.innerText)} link`;
+        }
+    }
+}
+
 document.body.addEventListener("contextmenu", function(event) {
     if (event.ctrlKey && event.altKey) {
-        var selector = findSelector(event.target);
+        var selector = generateSelector(event.target);
         if (selector) {
             copyText(selector);
             highlight(selector);

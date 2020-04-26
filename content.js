@@ -20,7 +20,6 @@ function showTooltip(element, message) {
     } else {
         tooltip.classList.remove("left");
     }
-    console.log("tooltip left", (rect.x + rect.width / 2));
 
     element.insertAdjacentElement("afterend", tooltip);
 }
@@ -153,9 +152,11 @@ function buildStepHtml() {
     html.push(`<div class="title-bar flex">`);
     html.push(`<span data-lr-toggle="" ${tooltipAttr(leftRightTooltip)}>&rightleftarrows;</span>`);
     html.push(`<span data-minimize="">${test.title}</span>`);
-    // make icons for each step.
-    html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
-    html.push(`<span ${tooltipAttr(autoModeTooltip)} data-automatic="${state.automatic}">&orarr;</span>`);
+    if (!state.recording) {
+        // make icons for each step.
+        html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
+        html.push(`<span ${tooltipAttr(autoModeTooltip)} data-automatic="${state.automatic}">&orarr;</span>`);
+    }
     html.push(`</div>`); // end of title bar.
 
     html.push(`<div class="current-step">`);
@@ -168,20 +169,40 @@ function buildStepHtml() {
     html.push(`<div class="buttons flex">`);
     var backButton = (testIndex > 0 || stepIndex > 0) ? `<button class="big" data-back-step="${stepIndex}">Back</button>` : "";
     html.push(`<span class="grow">${backButton}</span>`);
-    html.push(`<button class="big" data-next-step="${stepIndex}">Next</button>`);
-    html.push(`<button class="big good" data-pass-step="${stepIndex}">Pass</button>`);
-    html.push(`<button class="big warn" data-start-fail="">Fail</button>`);
+    if (state.recording) {
+        html.push(`<button class="big" data-view-code="">View Code</button>`);
+        if (!state.doneRecording) {
+            html.push(`<button class="big" data-stop-recording="">Stop Recording</button>`);
+        }
+    } else {
+        html.push(`<button class="big" data-next-step="${stepIndex}">Next</button>`);
+        html.push(`<button class="big good" data-pass-step="${stepIndex}">Pass</button>`);
+        html.push(`<button class="big warn" data-start-fail="">Fail</button>`);
+    }
     html.push(`</div>`); // end of .buttons
     html.push(`</div>`); // end of .instructions
     
-    html.push(`<div class="feedback-form">`);
-    html.push(`<div data-feedback="" contenteditable="true"></div>`);
-    html.push(`<div class="buttons flex">`);
-    html.push(`<span class="grow"><button class="big" data-cancel-fail="">Cancel</button></span>`);
-    html.push(`<span class="grow"><button class="big" data-take-screenshot="">Add Screenshot</button></span>`);
-    html.push(`<button class="big warn" data-fail-step="${stepIndex}">Submit</button>`);
-    html.push(`</div>`); // end of .buttons
-    html.push(`</div>`); // end of .feedback-form
+    if (state.recording) {
+        html.push(`<div class="code-display">`);
+        html.push(`<pre>${state.code}</pre>`);
+        html.push(`<div class="buttons flex">`);
+        html.push(`<span class="grow"></span>`);
+        html.push(`<button class="big" data-hide-code="">View Instructions</button>`);
+        if (!state.doneRecording) {
+            html.push(`<button class="big" data-stop-recording="">Stop Recording</button>`);
+        }
+        html.push(`</div>`); // end of .buttons
+        html.push(`</div>`); // end of .code-display
+    } else {
+        html.push(`<div class="feedback-form">`);
+        html.push(`<div data-feedback="" contenteditable="true"></div>`);
+        html.push(`<div class="buttons flex">`);
+        html.push(`<span class="grow"><button class="big" data-cancel-fail="">Cancel</button></span>`);
+        html.push(`<span class="grow"><button class="big" data-take-screenshot="">Add Screenshot</button></span>`);
+        html.push(`<button class="big warn" data-fail-step="${stepIndex}">Submit</button>`);
+        html.push(`</div>`); // end of .buttons
+        html.push(`</div>`); // end of .feedback-form
+    }
 
     html.push(`</div>`); // end of .current-step
 
@@ -496,6 +517,16 @@ function handleClick(event) {
         state.stepIndex = +event.target.getAttribute("data-set-step");
         syncState();
         buildOrUpdateUI();
+    } else if (event.target.hasAttribute("data-view-code")) {
+        uiElement.classList.add("viewing-code");
+    } else if (event.target.hasAttribute("data-hide-code")) {
+        uiElement.classList.remove("viewing-code");
+    } else if (event.target.hasAttribute("data-stop-recording")) {
+        uiElement.classList.add("viewing-code");
+        state.doneRecording = true;
+        stopRecording();
+        syncState();
+        buildOrUpdateUI();
     }
 }
 
@@ -556,13 +587,82 @@ function buildOrUpdateUI() {
     uiElement.innerHTML = html;
 }
 
-function gotNewData(message) {
-    console.log("got data", message);
-    if (message.state) {
-        state = message.state;
-        buildOrUpdateUI();
+// keep track of whether or not we're recording so we can detect
+// when recording starts and set up event listeners.
+var recording = false;
+
+function stopRecording() {
+    document.removeEventListener("keydown", recordKeyEvent, true);
+    document.removeEventListener("mousedown", recordClickEvent, true);
+}
+
+function recordKeyEvent(event) {
+    // right now, we don't care about every keypress, just when you're
+    // typing letters/numbers or you press enter.
+    console.log("recordKeyEvent", event);
+    if (event.key.length == 1 || event.key == "Enter") {
+        console.log("log event", event.key);
+        chrome.runtime.sendMessage({
+            type: RECORD_EVENT,
+            event: {
+                type: "keydown",
+                key: event.key
+            }
+        });
     }
 }
 
-chrome.runtime.sendMessage({ type: GET_STATE }, gotNewData);
-chrome.runtime.onMessage.addListener(gotNewData);
+function recordClickEvent(event) {
+    // if it's an element inside the extension's UI, ignore the event.
+    if (event.target.matches(".cm_ui, .cm_ui *")) {
+        return;
+    }
+
+    var selector = generateSelector(event.target);
+    var isInput = event.target.matches("input, textarea, [contenteditable]");
+    if (selector) {
+        chrome.runtime.sendMessage({
+            type: RECORD_EVENT,
+            event: {
+                type: "click",
+                selector: selector,
+                isInput: isInput,
+                label: generateLabel(event.target)
+            }
+        });
+    }
+}
+
+function gotNewData(message, isInitializingCall) {
+    if (message.state) {
+        state = message.state;
+        buildOrUpdateUI();
+
+        if (!recording && state.recording && !state.doneRecording) {
+            recording = true;
+
+            // todo: remove these event listeners when you're done recording.
+            // todo: switch this to use blur or change events so we just get the value that
+            //       was entered and we don't record backspacing.
+            document.addEventListener("keydown", recordKeyEvent, true);
+            document.addEventListener("mousedown", recordClickEvent, true);
+
+            if (isInitializingCall) {
+                chrome.runtime.sendMessage({
+                    type: RECORD_EVENT,
+                    event: {
+                        type: "navigate",
+                        url: location.href
+                    }
+                });
+            }
+        }
+    }
+}
+
+chrome.runtime.sendMessage({ type: GET_STATE }, function(message) {
+    gotNewData(message, true);
+});
+chrome.runtime.onMessage.addListener(function(message) {
+    gotNewData(message, false);
+});

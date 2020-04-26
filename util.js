@@ -6,6 +6,7 @@ var SET_STEP = "SET_STEP";
 var STOP_TEST = "STOP_TEST";
 var RUN_IN_FRAMES = "RUN_IN_FRAMES";
 var RELAY_TO_FRAMES = "RELAY_TO_FRAMES";
+var RECORD_EVENT = "RECORD_EVENT";
 
 function $(id) {
     return document.getElementById(id);
@@ -95,6 +96,7 @@ function findElementWithText(selector, text) {
 }
 
 function pressEnter(element) {
+    element.focus();
     ["keydown", "keypress", "keyup"].forEach(function(eventType) {
         element.dispatchEvent(
             new KeyboardEvent(eventType, {

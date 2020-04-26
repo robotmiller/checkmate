@@ -1,5 +1,5 @@
 
-.cm_ui, .cm_ui div, .cm_ui span, .cm_ui h1, .cm_ui h2, .cm_ui h3, .cm_ui p,
+.cm_ui, .cm_ui div, .cm_ui span, .cm_ui h1, .cm_ui h2, .cm_ui h3, .cm_ui p, .cm_ui pre,
 .cm_ui input, .cm_ui textarea, .cm_ui select, .cm_ui button,
 .cm_ui a, .cm_ui code, .cm_ui em, .cm_ui img, .cm_ui small, .cm_ui strong, .cm_ui label {
     margin: 0 !important;
@@ -305,4 +305,34 @@
 .cm_ui .tooltip.left:after {
     margin: 0 !important;
     left: 25px !important;
+}
+
+.cm_ui.viewing-code .current-step {
+    min-height: 200px !important;
+}
+.cm_ui.viewing-code .instructions {
+    opacity: 0 !important;
+}
+.cm_ui .code-display {
+    display: none !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+}
+.cm_ui .code-display pre {
+    background: #f4f4f4 !important;
+    border: 1px solid #444 !important;
+    border-radius: 3px !important;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px !important;
+    padding: 5px 8px !important;
+    width: calc(100% - 40px) !important;
+    height: calc(100% - 74px) !important;
+    margin: 10px 20px !important;
+    font-family: Consolas, monaco, "Courier New", monospace !important;
+    overflow: auto !important;
+}
+.cm_ui.viewing-code .code-display {
+    display: block !important;
 }

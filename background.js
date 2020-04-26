@@ -3,6 +3,10 @@
 // this data across the popup and all content scripts.
 var state;
 
+// when we're recording a test, this keeps track of all the events.
+var eventsBuffer = [];
+var _instructions = [];
+
 function getData() {
     var data = {};
     if (state) {
@@ -26,6 +30,56 @@ function updateAllTabs(sender) {
     });
 }
 
+// process the events buffer and turn it into a list of instructions.
+function getInstructions() {
+    // rules:
+    // - a click consumes all the keydown events after it.
+    // - ignore navigate events that follow click or enter key events.
+    _instructions.splice(0, _instructions.length);
+    var index = 0;
+    while (index < eventsBuffer.length) {
+        var prev = eventsBuffer[index - 1];
+        var next = eventsBuffer[index + 1];
+        var curr = eventsBuffer[index++];
+
+        if (curr.type == "navigate") {
+            if (prev) {
+                if (prev.type == "click") {
+                    continue;
+                }
+                if (prev.type == "keydown" && prev.key == "Enter") {
+                    continue;
+                }
+            }
+            if (prev && prev.tab != curr.tab) {
+                newTab(curr.url);
+            } else {
+                navigate(curr.url);
+            }
+        } else if (curr.type == "click") {
+            // if you clicked on an input field, consume all keyboard events that follow.
+            if (curr.isInput && next && next.type == "keydown") {
+                var text = "";
+                do {
+                    if (next.key.length > 1) {
+                        text += `{${next.key}}`;
+                    } else {
+                        text += next.key;
+                    }
+                    next = eventsBuffer[++index];
+                } while (next && next.type == "keydown")
+
+                type(text, curr.selector, curr.label);
+            } else {
+                var label = curr.label ? "the " + curr.label : "";
+                click(curr.selector, label);
+            }
+        }
+    }
+
+    return _instructions;
+}
+
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     console.log("got message", message);
     if (message.type == GET_STATE) {
@@ -33,6 +87,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     } else if (message.type == SET_STATE) {
         // if the existing state is not done and the new one is, this means we just finished.
         var justFinished = state && !state.done && message.state.done;
+
+        // if the old state was not recording but this one is, we just started.
+        var justStartedRecording = (!state || !state.recording) && message.state.recording;
+
         state = message.state;
         sendData(sendResponse);
 
@@ -44,6 +102,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
             setTimeout(function() {
                 chrome.tabs.create({url : "popup.html"});
             }, 800);
+        }
+
+        if (justStartedRecording) {
+            eventsBuffer.splice(0, eventsBuffer.length);
         }
     } else if (message.type == SWITCH_TAB) {
         // the message includes a url fragment, find the first tab that matches it.
@@ -126,5 +188,48 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                 setStatus("failed");
             }
         });
+    } else if (message.type == RECORD_EVENT) {
+        message.event.tab = sender.tab.id;
+        console.log("got event", message.event);
+
+        eventsBuffer.push(message.event);
+        var instructions = getInstructions();
+        state.tests[0].steps[0].instructions = instructions;
+
+        function wrapInQuotes(selector) {
+            return '"' + selector.replace(/"/g, "\\\"") + '"';
+        }
+
+        // turn the instructions into code.
+        state.code = instructions.map(function(i) {
+            if (i.type == "navigate") {
+                return `        navigate(${wrapInQuotes(i.url)});`;
+            } else if (i.type == "new-tab") {
+                return `        newTab(${wrapInQuotes(i.url)});`;
+            } else if (i.type == "click") {
+                if (i.label) {
+                    return `        click(${wrapInQuotes(i.selector)}, ${wrapInQuotes(i.label)});`;
+                } else {
+                    return `        click(${wrapInQuotes(i.selector)});`;
+                }
+            } else if (i.type == "type") {
+                var text = i.text + (i.doPressEnter ? "{Enter}" : "");
+                if (i.label) {
+                    return `        type(${wrapInQuotes(text)}, ${wrapInQuotes(i.selector)}, ${wrapInQuotes(i.label)});`;
+                } else {
+                    return `        type(${wrapInQuotes(text)}, ${wrapInQuotes(i.selector)});`
+                }
+            } else {
+                return `        // unrecognized type: ${i.type}`;
+            }
+        }).join("\n");
+        state.code = `test(${wrapInQuotes(state.tests[0].title)}, () => {
+    step(${wrapInQuotes(state.tests[0].steps[0].title)}, () => {
+${state.code}
+    });
+});`;
+
+        // send the generated instructions and code to all tabs.
+        updateAllTabs();
     }
 });
