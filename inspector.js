@@ -126,7 +126,6 @@ function findSelector(element) {
 
 document.body.addEventListener("contextmenu", function(event) {
     if (event.ctrlKey && event.altKey) {
-        // todo: figure out why this doesn't work on button elements.
         var selector = findSelector(event.target);
         if (selector) {
             copyText(selector);

@@ -185,7 +185,7 @@ function copyText(text) {
     var textarea = document.createElement("textarea");
     textarea.value = text;
     
-    // Avoid scrolling to bottom
+    // avoid scrolling to bottom.
     textarea.style.top = "0";
     textarea.style.left = "0";
     textarea.style.position = "fixed";
@@ -215,10 +215,10 @@ function takeScreenshot(callback) {
     video.setAttribute("autoplay", "");
 
     video.addEventListener("play", function() {
+        // we delay this 400ms so the 'share screen' modal has time to go away.
         setTimeout(function() {
             var settings = video.srcObject.getVideoTracks()[0].getSettings();
             var canvas = document.createElement("canvas");
-            // document.body.appendChild(canvas);
             canvas.width = settings.width;
             canvas.height = settings.height;
 
@@ -234,7 +234,7 @@ function takeScreenshot(callback) {
         }, 400);
     });
 
-    var displayMediaOptions = {
+    var options = {
         video: {
             cursor: "always"
         },
@@ -242,7 +242,7 @@ function takeScreenshot(callback) {
     };
 
     try {
-        navigator.mediaDevices.getDisplayMedia(displayMediaOptions).then(function(stream) {
+        navigator.mediaDevices.getDisplayMedia(options).then(function(stream) {
             window.video = stream;
             video.srcObject = stream;
         });
