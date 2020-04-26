@@ -209,3 +209,44 @@ function doesContainString(a, b) {
     b = (b || "").toLowerCase();
     return a.includes(b);
 }
+
+function takeScreenshot(callback) {
+    var video = document.createElement("video");
+    video.setAttribute("autoplay", "");
+
+    video.addEventListener("play", function() {
+        setTimeout(function() {
+            var settings = video.srcObject.getVideoTracks()[0].getSettings();
+            var canvas = document.createElement("canvas");
+            // document.body.appendChild(canvas);
+            canvas.width = settings.width;
+            canvas.height = settings.height;
+
+            var context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            callback(canvas.toDataURL("image/jpeg"));
+
+            var tracks = video.srcObject.getTracks();
+            tracks.forEach(function(track) {
+                track.stop();
+            });
+            video.srcObject = null;
+        }, 400);
+    });
+
+    var displayMediaOptions = {
+        video: {
+            cursor: "always"
+        },
+        audio: false
+    };
+
+    try {
+        navigator.mediaDevices.getDisplayMedia(displayMediaOptions).then(function(stream) {
+            window.video = stream;
+            video.srcObject = stream;
+        });
+    } catch(err) {
+        console.error("Error: " + err);
+    }
+}

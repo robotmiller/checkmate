@@ -108,32 +108,40 @@ function buildStepHtml() {
 
     // make the title bar:
     html.push(`<div class="title-bar flex">`);
-    html.push(`<span>${test.title}</span>`);
+    html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
+    html.push(`<span data-minimize="">${test.title}</span>`);
     // make icons for each step.
     html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
-    html.push(`<span data-minimize="">_</span>`);
     html.push(`<span data-automatic="${state.automatic}">&orarr;</span>`);
-    html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
-    html.push(`</div>`);
+    html.push(`</div>`); // end of title bar.
 
     html.push(`<div class="current-step">`);
-    // html.push(`<div class="step-title">${step.title}</div>`);
-    
+    html.push(`<div class="instructions">`);
     step.instructions.forEach((instruction, index) => {
         html.push(buildInstructionHtml(instruction, index));
     });
     
     // add buttons to either pass or fail this step.
     html.push(`<div class="buttons flex">`);
-    var backButton = (testIndex > 0 || stepIndex > 0) ? `<button class="big" data-back-step="${stepIndex}">back</button>` : "";
+    var backButton = (testIndex > 0 || stepIndex > 0) ? `<button class="big" data-back-step="${stepIndex}">Back</button>` : "";
     html.push(`<span class="grow">${backButton}</span>`);
-    html.push(`<button class="big" data-next-step="${stepIndex}">next</button>`);
-    html.push(`<button class="big" data-pass-step="${stepIndex}">pass</button>`);
-    html.push(`<button class="big" data-fail-step="${stepIndex}">fail</button>`);
-    html.push(`</div>`);
+    html.push(`<button class="big" data-next-step="${stepIndex}">Next</button>`);
+    html.push(`<button class="big good" data-pass-step="${stepIndex}">Pass</button>`);
+    html.push(`<button class="big warn" data-start-fail="">Fail</button>`);
+    html.push(`</div>`); // end of .buttons
+    html.push(`</div>`); // end of .instructions
     
-    html.push(`</div>`);
-    
+    html.push(`<div class="feedback-form">`);
+    html.push(`<div data-feedback="" contenteditable="true"></div>`);
+    html.push(`<div class="buttons flex">`);
+    html.push(`<span class="grow"><button class="big" data-cancel-fail="">Cancel</button></span>`);
+    html.push(`<span class="grow"><button class="big" data-take-screenshot="">Add Screenshot</button></span>`);
+    html.push(`<button class="big warn" data-fail-step="${stepIndex}">Submit</button>`);
+    html.push(`</div>`); // end of .buttons
+    html.push(`</div>`); // end of .feedback-form
+
+    html.push(`</div>`); // end of .current-step
+
     return html.join("");
 }
 
@@ -209,7 +217,6 @@ function doInstruction(instructionIndex) {
     var step = test.steps[stepIndex];
     var instruction = step.instructions[instructionIndex];
 
-    instruction.status = "running";
     var setStatus = function(status) {
         var test = state.tests[testIndex];
         var step = test.steps[stepIndex];
@@ -220,6 +227,7 @@ function doInstruction(instructionIndex) {
     };
 
     var tryInAllFrames = function() {
+        setStatus("running");
         chrome.runtime.sendMessage({
             type: RUN_IN_FRAMES,
             instruction: instruction,
@@ -228,7 +236,6 @@ function doInstruction(instructionIndex) {
             instructionIndex: instructionIndex
         });
     };
-    setStatus("running");
 
     var func = doers[instruction.type];
     if (func) {
@@ -318,7 +325,11 @@ register("custom", function(instruction, setStatus) {
     // if there's no code block with this, there's nothing to do
     // here and the user is just marking it as being done.
     if (!instruction.func) {
-        setStatus("success");
+        if (instruction.status == "success") {
+            setStatus("failed");
+        } else {
+            setStatus("success");
+        }
         return;
     }
 
@@ -400,8 +411,37 @@ function handleClick(event) {
     } else if (event.target.hasAttribute("data-pass-step")) {
         var stepIndex = +event.target.getAttribute("data-pass-step");
         advanceStep(stepIndex, "pass");
+    } else if (event.target.hasAttribute("data-start-fail")) {
+        // show the feedback form for this step.
+        // prepopulate the textarea with the text of the instructions that failed.
+        var input = document.querySelector(".cm_ui [data-feedback]");
+        if (!input.innerHTML) {
+            var failedButtons = document.querySelectorAll(".cm_ui [data-do-it].failed");
+            var text = Array.from(failedButtons).map(function(button, index) {
+                return (index + 1) + ". " + button.previousSibling.textContent.replace(/\n/g, " ");
+            }).join("<br/>");
+            if (text) {
+                input.innerHTML = "I wasn't able to to:<br/><br/>" + text;
+            }
+        }
+        document.querySelector(".cm_ui").classList.add("getting-feedback");
+        document.querySelector(".cm_ui [data-feedback]").focus();
+    } else if (event.target.hasAttribute("data-cancel-fail")) {
+        // hide the feedback form for this step and go back to the instructions.
+        document.querySelector(".cm_ui").classList.remove("getting-feedback");
+    } else if (event.target.hasAttribute("data-take-screenshot")) {
+        takeScreenshot(function(dataUrl) {
+            var input = document.querySelector(".cm_ui [data-feedback]");
+            var paragraph = document.createElement("p");
+            var image = document.createElement("img");
+            image.setAttribute("height", "160");
+            image.src = dataUrl;
+            paragraph.appendChild(image);
+            input.appendChild(paragraph);
+        });
     } else if (event.target.hasAttribute("data-fail-step")) {
         var stepIndex = +event.target.getAttribute("data-fail-step");
+        // document.querySelector(".cm_ui").classList.remove("getting-feedback");
         advanceStep(stepIndex, "fail");
     } else if (event.target.hasAttribute("data-next-step")) {
         var stepIndex = +event.target.getAttribute("data-next-step");
@@ -463,6 +503,8 @@ function buildOrUpdateUI() {
         // var styleTag = document.createElement("style");
         // styleTag.textContent = STYLE;
         // document.body.appendChild(styleTag);
+    } else {
+        document.querySelector(".cm_ui").classList.remove("getting-feedback");
     }
     uiElement.innerHTML = html;
 }

@@ -89,6 +89,8 @@ function getSelector(element) {
                 return selector;
             }
         }
+    } else if (/input|button|select|a/i.test(element.tagName)) {
+        return element.tagName.toLowerCase();
     }
 }
 
@@ -98,28 +100,14 @@ function findSelector(element) {
     var maxHeight = Math.max(element.offsetHeight * 1.5, element.offsetHeight + 40);
 
     while (element) {
-        // if the page has HTML like this:
-        // 
-        //   <a href="something"><span>link text</span></a>
-        // 
-        // you'll click on the span but it doesn't have a unique selector.
-        // clicking on the link is actually what we want, so the way we decide if an
-        // ancestor is acceptable is if it's a similar size. once we reach an ancestor
-        // that's much bigger than the element you clicked on, we stop.
-        if (element.offsetWidth > maxWidth || element.offsetHeight > maxHeight) {
-            // todo: fix a but with this size check...
-            // if the current element is close in size to the original one, then the current
-            // element is considered equivalent to it -- selecting it uniquely is as good as
-            // selecting the original.
-            // but, there's a chance the original element can't be identified but the combination
-            // of its selector plus a larger parent together uniquely identify the original element.
-            // because we break here, we never consider that possibility.
-            break;
-        }
+        // this element is considered a proxy for the one you actually clicked on if they're
+        // close in size. this way if you click on a span inside a button, the span might not
+        // have a unique selector but if the button does, we'll use its selector instead.
+        var isProxyForTarget = (element.offsetWidth <= maxWidth && element.offsetHeight <= maxHeight);
         var selector = getSelector(element);
 
         if (selector) {
-            if (isUnique(selector)) {
+            if (isProxyForTarget && isUnique(selector)) {
                 return selector;
             }
             // if this selector by itself isn't unique, lets try the whole list.
