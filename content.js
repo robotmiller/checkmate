@@ -1,4 +1,40 @@
 
+function showTooltip(element, message) {
+    // if the element already has a tooltip then we just update that element.
+    var tooltip;
+    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
+        tooltip = element.nextSibling;
+    } else {
+        tooltip = document.createElement("div");
+    }
+    tooltip.classList.add("tooltip");
+    tooltip.innerHTML = decodeURIComponent(message);
+
+    var rect = element.getBoundingClientRect();
+    tooltip.style.left = (rect.x + rect.width / 2) + "px";
+    tooltip.style.top = (rect.y - 8) + "px";
+
+    var tooltipX = rect.x + rect.width / 2;
+    if (tooltipX < 50) {
+        tooltip.classList.add("left");
+    } else {
+        tooltip.classList.remove("left");
+    }
+    console.log("tooltip left", (rect.x + rect.width / 2));
+
+    element.insertAdjacentElement("afterend", tooltip);
+}
+
+function hideTooltip(element) {
+    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
+        element.parentElement.removeChild(element.nextSibling);
+    }
+}
+
+function tooltipAttr(tooltip) {
+    return `data-tooltip="${encodeURIComponent(tooltip)}"`;
+}
+
 function truncate(value, length) {
     if (value.length < length) {
         return value;
@@ -79,17 +115,21 @@ function buildInstructionHtml(instruction, index) {
 function makeStepIcon(step, index) {
     var isActive = index == state.stepIndex;
     var result = step.result || "";
-    var label;
+    var label, tooltip;
     if (result == "pass") {
         label = "&check;";
+        tooltip = `Step ${index + 1}: ${step.title}<br/><strong>Passed!</strong>`;
     } else if (result == "fail") {
         label = "&times;";
+        tooltip = `Step ${index + 1}: ${step.title}<br/><strong>Failed!</strong>`;
     } else if (index == state.stepIndex) {
         label = "&hellip;";
+        tooltip = `Step ${index + 1}: ${step.title}<br/><strong>In Progress</strong>`;
     } else {
         label = "&nbsp;";
+        tooltip = `Step ${index + 1}: ${step.title}`;
     }
-    return `<span class="step-icon ${result} ${isActive ? "active": ""}" data-set-step="${index}">${label}</span>`;
+    return `<span class="step-icon ${result} ${isActive ? "active": ""}" ${tooltipAttr(tooltip)} data-set-step="${index}">${label}</span>`;
 }
 
 function buildStepHtml() {
@@ -106,13 +146,16 @@ function buildStepHtml() {
     
     var html = [];
 
+    var leftRightTooltip = "Moves the display to the left or right.";
+    var autoModeTooltip = "Toggles automatic execution of instructions.";
+
     // make the title bar:
     html.push(`<div class="title-bar flex">`);
-    html.push(`<span data-lr-toggle="">&rightleftarrows;</span>`);
+    html.push(`<span data-lr-toggle="" ${tooltipAttr(leftRightTooltip)}>&rightleftarrows;</span>`);
     html.push(`<span data-minimize="">${test.title}</span>`);
     // make icons for each step.
     html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
-    html.push(`<span data-automatic="${state.automatic}">&orarr;</span>`);
+    html.push(`<span ${tooltipAttr(autoModeTooltip)} data-automatic="${state.automatic}">&orarr;</span>`);
     html.push(`</div>`); // end of title bar.
 
     html.push(`<div class="current-step">`);
@@ -474,6 +517,8 @@ function handleMouseOver(event) {
         var instruction = getInstruction(+event.target.getAttribute("data-highlight"));
         highlight(instruction.selector, instruction.regex);
         highlightInAllFrames(instruction);
+    } else if (event.target.hasAttribute("data-tooltip")) {
+        showTooltip(event.target, event.target.getAttribute("data-tooltip"));
     }
 }
 function handleMouseOut(event) {
@@ -485,6 +530,8 @@ function handleMouseOut(event) {
         var instruction = getInstruction(+event.target.getAttribute("data-highlight"));
         unhighlight(instruction.selector, instruction.regex);
         unhighlightInAllFrames(instruction);
+    } else if (event.target.hasAttribute("data-tooltip")) {
+        hideTooltip(event.target);
     }
 }
 
