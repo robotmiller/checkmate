@@ -101,6 +101,22 @@
     padding: 10px !important;
 }
 
+.cm_ui .instructions-list {
+    max-height: 330px;
+    overflow: auto;
+}
+.cm_ui [data-scroll] {
+    transition: box-shadow 0.5s ease;
+}
+.cm_ui [data-scroll="down"].instructions-list {
+    box-shadow: inset rgba(0, 0, 0, .333) 0 -8px 8px -8px !important;
+}
+.cm_ui [data-scroll="up"].instructions-list {
+    /* box-shadow: inset rgba(0, 0, 0, .5) 0 12px 12px -12px !important; */
+}
+.cm_ui [data-scroll="updown"].instructions-list {
+    box-shadow: inset rgba(0, 0, 0, .333) 0 -8px 8px -8px !important;
+}
 .cm_ui .instruction {
     padding: 10px !important;
     border-bottom: 1px solid #ddd !important;

@@ -31,7 +31,7 @@ function updateAllTabs(sender) {
 }
 
 // process the events buffer and turn it into a list of instructions.
-function getInstructions() {
+function generateInstructions() {
     // rules:
     // - a click consumes all the keydown events after it.
     // - ignore navigate events that follow click or enter key events.
@@ -43,7 +43,7 @@ function getInstructions() {
         var curr = eventsBuffer[index++];
 
         if (curr.type == "navigate") {
-            if (prev) {
+            if (prev && prev.hostname == curr.hostname) {
                 if (prev.type == "click") {
                     continue;
                 }
@@ -57,6 +57,10 @@ function getInstructions() {
                 navigate(curr.url);
             }
         } else if (curr.type == "click") {
+            if (curr.tab != prev.tab) {
+                var tabLabel = curr.hostname.split(".").slice(-2).join(".");
+                switchTab(curr.hostname, tabLabel);
+            }
             // if you clicked on an input field, consume all keyboard events that follow.
             if (curr.isInput && next && next.type == "keydown") {
                 var text = "";
@@ -193,7 +197,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         console.log("got event", message.event);
 
         eventsBuffer.push(message.event);
-        var instructions = getInstructions();
+        var instructions = generateInstructions();
         state.tests[0].steps[0].instructions = instructions;
 
         function wrapInQuotes(selector) {
@@ -219,6 +223,8 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                 } else {
                     return `        type(${wrapInQuotes(text)}, ${wrapInQuotes(i.selector)});`
                 }
+            } else if (i.type == "switch-tab") {
+                return `        switchTab(${wrapInQuotes(i.url)}, ${wrapInQuotes(i.label)});`;
             } else {
                 return `        // unrecognized type: ${i.type}`;
             }

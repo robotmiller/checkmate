@@ -131,6 +131,16 @@ function makeStepIcon(step, index) {
     return `<span class="step-icon ${result} ${isActive ? "active": ""}" ${tooltipAttr(tooltip)} data-set-step="${index}">${label}</span>`;
 }
 
+function updateScroll(element) {
+    var atBottom = (element.scrollTop + element.offsetHeight >= element.scrollHeight);
+    var atTop = element.scrollTop == 0;
+
+    element.setAttribute(
+        "data-scroll",
+        (!atTop ? "up" : "") + (!atBottom ? "down" : "")
+    );
+}
+
 function buildStepHtml() {
     var testIndex = state.testIndex || 0;
     var stepIndex = state.stepIndex || 0;
@@ -161,9 +171,11 @@ function buildStepHtml() {
 
     html.push(`<div class="current-step">`);
     html.push(`<div class="instructions">`);
+    html.push(`<div class="instructions-list" data-scroll="">`);
     step.instructions.forEach((instruction, index) => {
         html.push(buildInstructionHtml(instruction, index));
     });
+    html.push(`</div>`); // end of .instructions-list
     
     // add buttons to either pass or fail this step.
     html.push(`<div class="buttons flex">`);
@@ -532,6 +544,9 @@ function handleClick(event) {
 
 function handleMouseDown(event) {
     if (event.target.hasAttribute("data-do-it")) {
+        if (state.recording) {
+            return;
+        }
         var index = +event.target.getAttribute("data-do-it");
         doInstruction(index);
     }
@@ -566,6 +581,12 @@ function handleMouseOut(event) {
     }
 }
 
+function handleScroll(event) {
+    if (event.target.hasAttribute("data-scroll")) {
+        updateScroll(event.target);
+    }
+}
+
 function buildOrUpdateUI() {
     var html = buildStepHtml();
 
@@ -577,14 +598,20 @@ function buildOrUpdateUI() {
         uiElement.addEventListener("mouseover", handleMouseOver, false);
         uiElement.addEventListener("mouseout", handleMouseOut, false);
         document.body.appendChild(uiElement);
-
-        // var styleTag = document.createElement("style");
-        // styleTag.textContent = STYLE;
-        // document.body.appendChild(styleTag);
     } else {
         document.querySelector(".cm_ui").classList.remove("getting-feedback");
     }
     uiElement.innerHTML = html;
+    setTimeout(function() {
+        Array.from(uiElement.querySelectorAll("[data-scroll]")).forEach(function(element) {
+            updateScroll(element);
+            element.addEventListener("scroll", handleScroll);
+        });
+
+        if (state.recording && !state.doneRecording) {
+            uiElement.querySelector(".instructions-list").scrollBy(0, 100000);
+        }
+    }, 0);
 }
 
 // keep track of whether or not we're recording so we can detect
@@ -596,18 +623,23 @@ function stopRecording() {
     document.removeEventListener("mousedown", recordClickEvent, true);
 }
 
+function recordEvent(event) {
+    event.hostname = location.hostname;
+    event.url = location.href;
+    chrome.runtime.sendMessage({
+        type: RECORD_EVENT,
+        event: event
+    });
+}
+
 function recordKeyEvent(event) {
     // right now, we don't care about every keypress, just when you're
     // typing letters/numbers or you press enter.
     console.log("recordKeyEvent", event);
     if (event.key.length == 1 || event.key == "Enter") {
-        console.log("log event", event.key);
-        chrome.runtime.sendMessage({
-            type: RECORD_EVENT,
-            event: {
-                type: "keydown",
-                key: event.key
-            }
+        recordEvent({
+            type: "keydown",
+            key: event.key
         });
     }
 }
@@ -621,14 +653,11 @@ function recordClickEvent(event) {
     var selector = generateSelector(event.target);
     var isInput = event.target.matches("input, textarea, [contenteditable]");
     if (selector) {
-        chrome.runtime.sendMessage({
-            type: RECORD_EVENT,
-            event: {
-                type: "click",
-                selector: selector,
-                isInput: isInput,
-                label: generateLabel(event.target)
-            }
+        recordEvent({
+            type: "click",
+            selector: selector,
+            isInput: isInput,
+            label: generateLabel(event.target)
         });
     }
 }
@@ -648,13 +677,7 @@ function gotNewData(message, isInitializingCall) {
             document.addEventListener("mousedown", recordClickEvent, true);
 
             if (isInitializingCall) {
-                chrome.runtime.sendMessage({
-                    type: RECORD_EVENT,
-                    event: {
-                        type: "navigate",
-                        url: location.href
-                    }
-                });
+                recordEvent({ type: "navigate" });
             }
         }
     }
