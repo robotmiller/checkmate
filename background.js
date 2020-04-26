@@ -37,6 +37,7 @@ function generateInstructions() {
     // - ignore navigate events that follow click or enter key events.
     _instructions.splice(0, _instructions.length);
     var index = 0;
+    var hasNavigated = false;
     while (index < eventsBuffer.length) {
         var prev = eventsBuffer[index - 1];
         var next = eventsBuffer[index + 1];
@@ -51,13 +52,18 @@ function generateInstructions() {
                     continue;
                 }
             }
+            hasNavigated = true;
             if (prev && prev.tab != curr.tab) {
                 newTab(curr.url);
             } else {
                 navigate(curr.url);
             }
         } else if (curr.type == "click") {
-            if (curr.tab != prev.tab) {
+            if (!hasNavigated) {
+                hasNavigated = true;
+                navigate(curr.url);
+            }
+            if (prev && curr.tab != prev.tab) {
                 var tabLabel = curr.hostname.split(".").slice(-2).join(".");
                 switchTab(curr.hostname, tabLabel);
             }
