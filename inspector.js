@@ -53,29 +53,20 @@ function getSelector(element) {
         var id = element.id.replace(/([:.>~+" ])/g, "\\$1");
         return "#" + id;
     }
-    var mostUniqueClass = "";
-    var mostUniqueClassMatches = 9999999;
-    for (var i = 0; i < element.classList.length; i++) {
-        var matches = document.getElementsByClassName(element.classList[i]).length;
-        if (matches < mostUniqueClassMatches) {
-            mostUniqueClassMatches = matches;
-            mostUniqueClass = element.classList[i];
+
+    var attributesToCheck = ["name", "data-testid", "data-qa", "role", "type"];
+    for (var i = 0; i < attributesToCheck.length; i++) {
+        var attr = attributesToCheck[i];
+        if (element.hasAttribute(attr)) {
+            var selector = attrSelector(attr, element.getAttribute(attr));
+            if (isUnique(selector)) {
+                return selector;
+            }
         }
     }
-    if (mostUniqueClass) {
-        return "." + mostUniqueClass;
-    }
 
-    if (element.hasAttribute("name")) {
-        return attrSelector("name", element.getAttribute("name"));
-    } else if (element.hasAttribute("data-testid")) {
-        return attrSelector("data-testid", element.getAttribute("data-testid"));
-    } else if (element.hasAttribute("data-qa")) {
-        return attrSelector("data-qa", element.getAttribute("data-qa"));
-    } else if (element.hasAttribute("role")) {
-        return attrSelector("role", element.getAttribute("role"));
-    } else if (element.hasAttribute("href")) {
-        // look for a unique part of the selector.
+    if (element.hasAttribute("href")) {
+        // try to find a short part of the href that's unique.
         var route = element.getAttribute("href").split("?")[0];
         var parts = route.split("/");
         for (var i = 0; i < parts.length; i++) {
@@ -89,8 +80,28 @@ function getSelector(element) {
                 return selector;
             }
         }
+    }
+
+    var mostUniqueClass = "";
+    var mostUniqueClassMatches = 9999999;
+    for (var i = 0; i < element.classList.length; i++) {
+        var matches = document.getElementsByClassName(element.classList[i]).length;
+        if (matches < mostUniqueClassMatches) {
+            mostUniqueClassMatches = matches;
+            mostUniqueClass = element.classList[i];
+        }
+    }
+
+    // if we haven't found anything yet, our preferences here are:
+    //  1. a unique class.
+    //  2. a tag name for something that's clickable.
+    //  3. the most unique (but not unique) class.
+    if (mostUniqueClass && isUnique("." + mostUniqueClass)) {
+        return "." + mostUniqueClass;
     } else if (/input|button|select|a/i.test(element.tagName)) {
         return element.tagName.toLowerCase();
+    } else if (mostUniqueClass) {
+        return "." + mostUniqueClass;
     }
 }
 

@@ -40,6 +40,10 @@ function unhighlight(elementOrSelector, regex) {
     }
 }
 
+function isInput(element) {
+    return element.matches("input, textarea, [contenteditable]");
+}
+
 function findElement(selector, regex) {
     if (regex && typeof regex == "string") {
         regex = eval(regex);

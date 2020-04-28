@@ -164,6 +164,7 @@
 }
 .cm_ui [data-automatic] {
     line-height: 1 !important;
+    margin-left: 20px !important;
     margin-right: 4px !important;
     font-weight: normal !important;
     cursor: pointer !important;

@@ -32,9 +32,6 @@ function updateAllTabs(sender) {
 
 // process the events buffer and turn it into a list of instructions.
 function generateInstructions() {
-    // rules:
-    // - a click consumes all the keydown events after it.
-    // - ignore navigate events that follow click or enter key events.
     _instructions.splice(0, _instructions.length);
     var index = 0;
     var hasNavigated = false;
@@ -67,27 +64,42 @@ function generateInstructions() {
                 var tabLabel = curr.hostname.split(".").slice(-2).join(".");
                 switchTab(curr.hostname, tabLabel);
             }
-            // if you clicked on an input field, consume all keyboard events that follow.
-            if (curr.isInput && next && next.type == "keydown") {
-                var text = "";
-                do {
-                    if (next.key.length > 1) {
-                        text += `{${next.key}}`;
-                    } else {
-                        text += next.key;
-                    }
-                    next = eventsBuffer[++index];
-                } while (next && next.type == "keydown")
 
-                type(text, curr.selector, curr.label);
-            } else {
-                var label = curr.label ? "the " + curr.label : "";
-                click(curr.selector, label);
+            // if the next event targets the same element, ignore this one.
+            if (next && next.selector == curr.selector) {
+                continue;
             }
+
+            // if the next event is a blur event, record that first because this click is
+            // what triggered the blur but they get recorded in the opposite order.
+            if (next && next.subtype == "blur") {
+                type(next.text, next.selector, next.label);
+                index += 1;
+            }
+
+            var label = curr.label ? "the " + curr.label : "";
+            click(curr.selector, label);
+        } else if (curr.type == "type") {
+            // if the next event targets the same element, ignore this one.
+            if (next && next.selector == curr.selector) {
+                continue;
+            }
+            if (!hasNavigated) {
+                hasNavigated = true;
+                navigate(curr.url);
+            }
+            type(curr.text, curr.selector, curr.label);
         }
     }
 
-    return _instructions;
+    // do a final pass to remove unnecessary events.
+    return _instructions.filter(function(curr, index) {
+        var next = _instructions[index + 1];
+        if (curr.type == "click" && next && next.selector == curr.selector) {
+            return false;
+        }
+        return true;
+    });
 }
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {

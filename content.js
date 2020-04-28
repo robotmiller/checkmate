@@ -619,6 +619,7 @@ function buildOrUpdateUI() {
 var recording = false;
 
 function stopRecording() {
+    document.removeEventListener("blur", recordBlurEvent, true);
     document.removeEventListener("keydown", recordKeyEvent, true);
     document.removeEventListener("mousedown", recordClickEvent, true);
 }
@@ -633,14 +634,32 @@ function recordEvent(event) {
 }
 
 function recordKeyEvent(event) {
-    // right now, we don't care about every keypress, just when you're
-    // typing letters/numbers or you press enter.
-    console.log("recordKeyEvent", event);
-    if (event.key.length == 1 || event.key == "Enter") {
-        recordEvent({
-            type: "keydown",
-            key: event.key
-        });
+    // we only care if you hit enter while typing.
+    if (isInput(event.target) && event.key == "Enter") {
+        var selector = generateSelector(event.target);
+        if (selector) {
+            recordEvent({
+                type: "type",
+                text: (event.target.value || event.target.innerHTML) + "{Enter}",
+                selector: selector,
+                label: generateLabel(event.target)
+            });
+        }
+    }
+}
+
+function recordBlurEvent(event) {
+    if (isInput(event.target)) {
+        var selector = generateSelector(event.target);
+        if (selector) {
+            recordEvent({
+                type: "type",
+                subtype: "blur",
+                text: (event.target.value || event.target.innerHTML),
+                selector: selector,
+                label: generateLabel(event.target)
+            });
+        }
     }
 }
 
@@ -651,12 +670,11 @@ function recordClickEvent(event) {
     }
 
     var selector = generateSelector(event.target);
-    var isInput = event.target.matches("input, textarea, [contenteditable]");
     if (selector) {
         recordEvent({
             type: "click",
             selector: selector,
-            isInput: isInput,
+            isInput: isInput(event.target),
             label: generateLabel(event.target)
         });
     }
@@ -670,9 +688,7 @@ function gotNewData(message, isInitializingCall) {
         if (!recording && state.recording && !state.doneRecording) {
             recording = true;
 
-            // todo: remove these event listeners when you're done recording.
-            // todo: switch this to use blur or change events so we just get the value that
-            //       was entered and we don't record backspacing.
+            document.addEventListener("blur", recordBlurEvent, true);
             document.addEventListener("keydown", recordKeyEvent, true);
             document.addEventListener("mousedown", recordClickEvent, true);
 
