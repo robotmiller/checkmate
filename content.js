@@ -34,14 +34,6 @@ function tooltipAttr(tooltip) {
     return `data-tooltip="${encodeURIComponent(tooltip)}"`;
 }
 
-function truncate(value, length) {
-    if (value.length < length) {
-        return value;
-    } else {
-        return value.substring(0, length).trim() + "&hellip;";
-    }
-}
-
 function makeCopyBlock(value) {
     return `<span data-copy="${encodeURIComponent(value)}">${truncate(value, 40)}</span>`;
 }
@@ -55,7 +47,11 @@ function makeSelectBlock(selector, label) {
 }
 
 function formatUrl(url) {
-    return url.replace(/^http(s?):\/\//i, "");
+    url = url.replace(/^http(s?):\/\//i, "");
+    if (url.length > 50 && url.includes("?")) {
+        url = url.split("?")[0] + "?&hellip;";
+    }
+    return url;
 }
 
 function buildInstructionHtml(instruction, index) {
@@ -107,6 +103,9 @@ function buildInstructionHtml(instruction, index) {
         doitLabel = "?";
         doitClass = "manual";
     }
+    if (state.recording) {
+        doitClass += " disabled";
+    }
     var doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
     return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
 }
@@ -155,8 +154,8 @@ function buildStepHtml() {
     
     var html = [];
 
-    var leftRightTooltip = "Moves the display to the left or right.";
-    var autoModeTooltip = "Toggles automatic execution of instructions.";
+    var leftRightTooltip = "Move the display to the left or right.";
+    var autoModeTooltip = "Automatically execute instructions.";
 
     // make the title bar:
     html.push(`<div class="title-bar flex">`);
@@ -649,13 +648,14 @@ function recordKeyEvent(event) {
 }
 
 function recordBlurEvent(event) {
-    if (isInput(event.target)) {
+    var text = getInputValue(event.target);
+    if (text) {
         var selector = generateSelector(event.target);
-        if (selector) {
+        if (selector && text) {
             recordEvent({
                 type: "type",
                 subtype: "blur",
-                text: (event.target.value || event.target.innerHTML),
+                text: text,
                 selector: selector,
                 label: generateLabel(event.target)
             });

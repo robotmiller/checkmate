@@ -66,6 +66,8 @@ function generateInstructions() {
             }
 
             // if the next event targets the same element, ignore this one.
+            // this might happen because you click on something then type in it
+            // and type() should work without having a click() for that element.
             if (next && next.selector == curr.selector) {
                 continue;
             }

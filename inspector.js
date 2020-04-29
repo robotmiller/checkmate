@@ -54,7 +54,15 @@ function getSelector(element) {
         return "#" + id;
     }
 
-    var attributesToCheck = ["name", "data-testid", "data-qa", "role", "type"];
+    var attributesToCheck = [
+        "name",
+        "data-testid",
+        "data-qa",
+        "role",
+        "aria-label",
+        "title",
+        "type"
+    ];
     for (var i = 0; i < attributesToCheck.length; i++) {
         var attr = attributesToCheck[i];
         if (element.hasAttribute(attr)) {
@@ -106,6 +114,13 @@ function getSelector(element) {
 }
 
 function generateSelector(element) {
+    // if the element is inside an svg tag, let's use the svg tag itself instead.
+    while (element.matches("svg, svg *")) {
+        element = element.parentElement;
+    }
+    if (/ng-include/i.test(element.tagName)) {
+        element = element.parentElement;
+    }
     var selectors = [];
     var maxWidth = Math.max(element.offsetWidth * 1.5, element.offsetWidth + 40);
     var maxHeight = Math.max(element.offsetHeight * 1.5, element.offsetHeight + 40);
@@ -139,9 +154,15 @@ function generateLabel(element) {
     var isInput = element.matches("input, textarea") && !/submit|button/i.test(element.getAttribute("type"));
 
     function normalizeWhitespace(text) {
+        if (!text) {
+            return "";
+        }
         return text.replace(/\n|\r|\t/g, " ").replace(/_/g, " ").replace(/\s+/g, " ").trim();
     }
     function quoteIfNeeded(label) {
+        if (!label) {
+            return "";
+        }
         return label.includes(" ") ? `'${label}'` : label;
     }
 
@@ -156,12 +177,15 @@ function generateLabel(element) {
         var isButton = element.matches("input[type=submit], input[type=button], button, button *, [role=button], [role=button] *");
         var isLink = element.matches("a, a *");
 
-        if (isTab) {
-            return `${quoteIfNeeded(element.innerText)} tab`;
-        } else if (isButton) {
-            return `${quoteIfNeeded(element.innerText)} button`;
-        } else if (isLink) {
-            return `${quoteIfNeeded(element.innerText)} link`;
+        var label = truncate(normalizeWhitespace(element.innerText), 30);
+        if (label) {
+            if (isTab) {
+                return `${quoteIfNeeded(label)} tab`;
+            } else if (isButton) {
+                return `${quoteIfNeeded(label)} button`;
+            } else if (isLink) {
+                return `${quoteIfNeeded(label)} link`;
+            }
         }
     }
 }

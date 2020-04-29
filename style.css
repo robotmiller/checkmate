@@ -102,8 +102,8 @@
 }
 
 .cm_ui .instructions-list {
-    max-height: 330px;
-    overflow: auto;
+    max-height: 330px !important;
+    overflow: auto !important;
 }
 .cm_ui [data-scroll] {
     transition: box-shadow 0.5s ease;
@@ -205,6 +205,11 @@
 }
 .cm_ui [data-do-it].manual {
     background: #ccc !important;
+}
+.cm_ui [data-do-it].disabled {
+    background: #ccc !important;
+    color: #eee !important;
+    cursor: not-allowed !important;
 }
 
 .cm_ui .buttons {

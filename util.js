@@ -44,6 +44,16 @@ function isInput(element) {
     return element.matches("input, textarea, [contenteditable]");
 }
 
+function getInputValue(element) {
+    if (isInput(element)) {
+        if (element.hasAttribute("contenteditable")) {
+            return element.textContent.trim();
+        } else {
+            return element.value.trim();
+        }
+    }
+}
+
 function findElement(selector, regex) {
     if (regex && typeof regex == "string") {
         regex = eval(regex);
@@ -214,6 +224,14 @@ function doesContainString(a, b) {
     a = (a || "").toLowerCase();
     b = (b || "").toLowerCase();
     return a.includes(b);
+}
+
+function truncate(value, length) {
+    if (value.length < length) {
+        return value;
+    } else {
+        return value.substring(0, length).trim() + "&hellip;";
+    }
 }
 
 function takeScreenshot(callback) {
