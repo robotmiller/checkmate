@@ -74,10 +74,12 @@ function custom(text, func) {
         canDo: false
     };
     if (func) {
-        instruction.hasArgs = false;
+        instruction.args = [];
         instruction.func = func.toString()
             .replace(/^(?:function\s*[^\(]*)?\s*\(([^)]*)\)\s*(?:=>)?\s*\{/i, function(text, argString) {
-                instruction.hasArgs = !!argString.trim();
+                instruction.args = argString.split(",").map(function(arg) {
+                    return arg.trim();
+                });
                 return "";
             }).replace(/\}\s*$/i, "").trim();
         instruction.canDo = true;

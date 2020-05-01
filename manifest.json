@@ -22,8 +22,7 @@
         {
             "matches": ["*://*/*"],
             "run_at": "document_end",
-            "js": ["util.js", "content.js", "inspector.js"],
-            "css": ["style.css"]
+            "js": ["util.js", "style.js", "content.js", "inspector.js"]
         },
         {
             "matches": ["*://*/*"],

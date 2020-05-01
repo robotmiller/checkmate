@@ -220,7 +220,7 @@ function buildStepHtml() {
     return html.join("");
 }
 
-var uiElement, state;
+var rootElement, uiElement, state;
 
 function syncState() {
     chrome.runtime.sendMessage({
@@ -408,12 +408,29 @@ register("custom", function(instruction, setStatus) {
         return;
     }
 
-    var callback = function() {
-        setStatus("success");
+    var timeout;
+    var callback = function(status) {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        setStatus(status);
     };
-    var func = new Function(instruction.func);
-    if (instruction.hasArgs) {
-        func(callback);
+    var func = new Function(instruction.args[0], instruction.func);
+    // if the custom func takes a parameter, that parameter is a callback that's used to
+    // set the status of this instruction. this is used when the status needs to be set
+    // asynchronously. if it doesn't take a parameter, we assume the custom function's
+    // successful execution means the instruction succeeded.
+    if (instruction.args.length) {
+        setStatus("running");
+        try {
+            func(callback);
+            // if the callback isn't called within 5 seconds, assume it failed.
+            timeout = setTimeout(function() {
+                setStatus("failed");
+            }, 5000);
+        } catch (e) {
+            setStatus("failed");
+        }
     } else {
         try {
             func();
@@ -489,9 +506,9 @@ function handleClick(event) {
     } else if (event.target.hasAttribute("data-start-fail")) {
         // show the feedback form for this step.
         // prepopulate the textarea with the text of the instructions that failed.
-        var input = document.querySelector(".cm_ui [data-feedback]");
+        var input = uiElement.querySelector("[data-feedback]");
         if (!input.innerHTML) {
-            var failedButtons = document.querySelectorAll(".cm_ui [data-do-it].failed");
+            var failedButtons = uiElement.querySelectorAll("[data-do-it].failed");
             var text = Array.from(failedButtons).map(function(button, index) {
                 return (index + 1) + ". " + button.previousSibling.textContent.replace(/\n/g, " ");
             }).join("<br/>");
@@ -499,14 +516,14 @@ function handleClick(event) {
                 input.innerHTML = "I wasn't able to to:<br/><br/>" + text;
             }
         }
-        document.querySelector(".cm_ui").classList.add("getting-feedback");
-        document.querySelector(".cm_ui [data-feedback]").focus();
+        uiElement.classList.add("getting-feedback");
+        uiElement.querySelector("[data-feedback]").focus();
     } else if (event.target.hasAttribute("data-cancel-fail")) {
         // hide the feedback form for this step and go back to the instructions.
-        document.querySelector(".cm_ui").classList.remove("getting-feedback");
+        uiElement.classList.remove("getting-feedback");
     } else if (event.target.hasAttribute("data-take-screenshot")) {
         takeScreenshot(function(dataUrl) {
-            var input = document.querySelector(".cm_ui [data-feedback]");
+            var input = uiElement.querySelector("[data-feedback]");
             var paragraph = document.createElement("p");
             var image = document.createElement("img");
             image.setAttribute("height", "160");
@@ -516,7 +533,7 @@ function handleClick(event) {
         });
     } else if (event.target.hasAttribute("data-fail-step")) {
         var stepIndex = +event.target.getAttribute("data-fail-step");
-        // document.querySelector(".cm_ui").classList.remove("getting-feedback");
+        // uiElement.classList.remove("getting-feedback");
         advanceStep(stepIndex, "fail");
     } else if (event.target.hasAttribute("data-next-step")) {
         var stepIndex = +event.target.getAttribute("data-next-step");
@@ -590,18 +607,36 @@ function buildOrUpdateUI() {
     var html = buildStepHtml();
 
     if (!uiElement) {
+        rootElement = document.createElement("div");
+        var shadow = rootElement.attachShadow({ mode: "closed" });
+        document.body.appendChild(rootElement);
+
+        var style = document.createElement("style");
+        style.innerText = STYLE;
+        shadow.appendChild(style);
+
         uiElement = document.createElement("div");
         uiElement.className = "cm_ui";
         uiElement.addEventListener("click", handleClick, false);
         uiElement.addEventListener("mousedown", handleMouseDown, false);
         uiElement.addEventListener("mouseover", handleMouseOver, false);
         uiElement.addEventListener("mouseout", handleMouseOut, false);
-        document.body.appendChild(uiElement);
+        shadow.appendChild(uiElement);
     } else {
-        document.querySelector(".cm_ui").classList.remove("getting-feedback");
+        uiElement.classList.remove("getting-feedback");
     }
     uiElement.innerHTML = html;
     setTimeout(function() {
+        var feedbackInput = uiElement.querySelector("[data-feedback]");
+        if (feedbackInput) {
+            var stopPropagation = function(event) {
+                event.stopPropagation();
+            };
+            feedbackInput.addEventListener("keyup", stopPropagation, true);
+            feedbackInput.addEventListener("keydown", stopPropagation, true);
+            feedbackInput.addEventListener("keypress", stopPropagation, true);
+        }
+
         Array.from(uiElement.querySelectorAll("[data-scroll]")).forEach(function(element) {
             updateScroll(element);
             element.addEventListener("scroll", handleScroll);
@@ -695,6 +730,8 @@ function gotNewData(message, isInitializingCall) {
             if (isInitializingCall) {
                 recordEvent({ type: "navigate" });
             }
+        } else {
+            uiElement.classList.remove("viewing-code");
         }
     }
 }
