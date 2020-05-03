@@ -1,5 +1,5 @@
 
-var state;
+var state, feedback;
 
 // these are updated by the functions in builders.js.
 var _tests, _test, _instructions;
@@ -31,15 +31,34 @@ function makeStepIcon(step, stepIndex, testIndex) {
 function showTestDetails() {
     // list out each test and it's status.
     var html = [];
-    html.push(`<ol>`);
     state.tests.forEach(function(test, testIndex) {
+        html.push(`<div class="test">`);
         var icons = test.steps.map(function(step, stepIndex) {
             return makeStepIcon(step, stepIndex, testIndex);
         }).join("");
         var testTitle = `<span class="test-title" data-test="${testIndex}">${test.title}</span>`;
-        html.push(`<li>${testTitle}${icons}</li>`)
+        html.push(`<div class="title">${testTitle}${icons}</div>`)
+
+        // include feedback about each test.
+        html.push(`<div class="steps">`);
+        test.steps.forEach(function(step, stepIndex) {
+            html.push(`<div class="step ${step.result}">`);
+            html.push(`<p class="h3">Step ${stepIndex + 1}: ${step.title}</p>`);
+            html.push(`<ol class="instructions">`);
+            step.instructions.forEach(function(instruction, index) {
+                html.push(`<li>${buildInstructionHtml(instruction, index, false)}</li>`);
+            });
+            html.push(`</ol>`);
+
+            var key = `${testIndex}_${stepIndex}`;
+            if (feedback && feedback[key]) {
+                html.push(`<blockquote>${feedback[key]}</blockquote>`);
+            }
+            html.push(`</div>`); // end of .step
+        });
+        html.push(`</div>`); // end of .steps
+        html.push(`</div>`); // end of .test
     });
-    html.push(`</ol>`);
     $("test-details").innerHTML = html.join("");
 }
 
@@ -59,6 +78,7 @@ function gotNewData(message) {
         }
 
         state = message.state;
+        feedback = message.feedback;
         showTestDetails();
     } else {
         show("test-form");
@@ -67,7 +87,7 @@ function gotNewData(message) {
     }
 }
 
-chrome.runtime.sendMessage({ type: GET_STATE }, gotNewData);
+chrome.runtime.sendMessage({ type: GET_STATE, isPopup: true }, gotNewData);
 
 function handleEvalError(e) {
     // we can remove this because we'll add it before trying to eval again.
@@ -124,7 +144,7 @@ function processManifest(code) {
 
     // if we reach this point, the eval worked.
     chrome.runtime.sendMessage({
-        type: SET_STATE,
+        type: START_TEST,
         state: {
             testIndex: 0,
             stepIndex: 0,
@@ -234,5 +254,11 @@ document.body.addEventListener("click", function(event) {
         state.testIndex = testIndex;
         state.stepIndex = stepIndex;
         showTestDetails();
+    } else if (event.target.matches("blockquote img")) {
+        event.target.classList.toggle("maximized");
     }
 }, false);
+
+if (window.innerWidth > 430) {
+    document.body.className = "full-page";
+}

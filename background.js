@@ -6,6 +6,7 @@ var state;
 // when we're recording a test, this keeps track of all the events.
 var eventsBuffer = [];
 var _instructions = [];
+var _feedback = {};
 
 function getData() {
     var data = {};
@@ -13,10 +14,6 @@ function getData() {
         data.state = state;
     }
     return data;
-}
-
-function sendData(sendResponse) {
-    sendResponse(getData());
 }
 
 function updateAllTabs(sender) {
@@ -107,7 +104,22 @@ function generateInstructions() {
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     console.log("got message", message);
     if (message.type == GET_STATE) {
-        sendData(sendResponse);
+        // if this is for the popup and we're done, include feedback too.
+        if (message.isPopup && state && state.done) {
+            var data = getData();
+            data.feedback = _feedback;
+            sendResponse(data);
+        } else {
+            sendResponse(getData());
+        }
+    } else if (message.type == START_TEST) {
+        _feedback = {};
+        state = message.state;
+        sendResponse(getData());
+        updateAllTabs(sender);
+    } else if (message.type == SAVE_FEEDBACK) {
+        var key = `${message.testIndex}_${message.stepIndex}`;
+        _feedback[key] = message.feedback;
     } else if (message.type == SET_STATE) {
         // if the existing state is not done and the new one is, this means we just finished.
         var justFinished = state && !state.done && message.state.done;
@@ -116,7 +128,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         var justStartedRecording = (!state || !state.recording) && message.state.recording;
 
         state = message.state;
-        sendData(sendResponse);
+        sendResponse(getData());
 
         // send this new state to every other content script.
         updateAllTabs(sender);

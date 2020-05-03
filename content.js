@@ -34,82 +34,6 @@ function tooltipAttr(tooltip) {
     return `data-tooltip="${encodeURIComponent(tooltip)}"`;
 }
 
-function makeCopyBlock(value) {
-    return `<span data-copy="${encodeURIComponent(value)}">${truncate(value, 40)}</span>`;
-}
-
-function makeSelectBlock(selector, label) {
-    if (selector) {
-        return `<span data-select="${encodeURIComponent(selector)}">${label || selector}</span>`;
-    } else {
-        return label;
-    }
-}
-
-function formatUrl(url) {
-    url = url.replace(/^http(s?):\/\//i, "");
-    if (url.length > 50 && url.includes("?")) {
-        url = url.split("?")[0] + "?&hellip;";
-    }
-    return url;
-}
-
-function buildInstructionHtml(instruction, index) {
-    var content;
-    var status = instruction.status;
-    var canDo = instruction.canDo;
-    var type = instruction.type;
-    var url = instruction.url;
-    var selector = instruction.selector;
-    var label = instruction.label;
-    var text = instruction.text;
-
-    if (type == "navigate") {
-        content = `Navigate to <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a>`;
-    } else if (type == "new-tab") {
-        content = `Open <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a> in a new tab.`;
-    } else if (type == "switch-tab") {
-        content = `Switch to the ${label || url} tab.`;
-    } else if (type == "type") {
-        var pressEnter = instruction.doPressEnter ? " and press Enter" : "";
-        content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}${pressEnter}.`;
-    } else if (type == "click") {
-        content = `Click on ${makeSelectBlock(selector, label)}.`;
-    } else if (type == "custom") {
-        content = text;
-    } else if (type == "observe") {
-        if (selector || label) {
-            content = `Find the text ${makeCopyBlock(text)} in ${makeSelectBlock(selector, label)}.`;
-        } else {
-            content = `Find the text ${makeCopyBlock(text)}`;
-        }
-    } else if (type == "find-element") {
-        content = `Find the ${makeSelectBlock(label)}`;
-    }
-
-    var highlightAttr = selector ? `data-highlight="${index}"` : "";
-
-    var note = instruction.note ? `<br/><span class="note">${instruction.note}</span>` : "";
-
-    var doitLabel = "do it";
-    var doitClass = "";
-    if (status == "running") {
-        doitLabel = "...";
-    } else if (status == "success") {
-        doitLabel = "&check;";
-    } else if (status == "failed") {
-        doitLabel = "&times;";
-    } else if (!canDo) {
-        doitLabel = "?";
-        doitClass = "manual";
-    }
-    if (state.recording) {
-        doitClass += " disabled";
-    }
-    var doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
-    return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
-}
-
 function makeStepIcon(step, index) {
     var isActive = index == state.stepIndex;
     var result = step.result || "";
@@ -172,7 +96,7 @@ function buildStepHtml() {
     html.push(`<div class="instructions">`);
     html.push(`<div class="instructions-list" data-scroll="">`);
     step.instructions.forEach((instruction, index) => {
-        html.push(buildInstructionHtml(instruction, index));
+        html.push(buildInstructionHtml(instruction, index, true));
     });
     html.push(`</div>`); // end of .instructions-list
     
@@ -229,13 +153,29 @@ function syncState() {
     }, gotNewData);
 }
 
-function advanceStep(stepIndex, result) {
+function submitFeedback(testIndex, stepIndex, feedback) {
+    chrome.runtime.sendMessage({
+        type: SAVE_FEEDBACK,
+        testIndex: testIndex,
+        stepIndex: stepIndex,
+        feedback: feedback
+    });
+}
+
+function advanceStep(stepIndex, result, feedback) {
     var test = state.tests[state.testIndex];
+
     // if there's no result provided then we're just going to the next step
     // and we don't want to change the assigned status.
     if (result) {
         test.steps[stepIndex].result = result;
     }
+
+    // save feedback before we increment the test/step indexes.
+    if (feedback) {
+        submitFeedback(state.testIndex, state.stepIndex, feedback);
+    }
+
     // if this was the last step, advance to the next test.
     if (stepIndex >= test.steps.length - 1) {
         // if this was the last test, we're done!
@@ -522,19 +462,23 @@ function handleClick(event) {
         // hide the feedback form for this step and go back to the instructions.
         uiElement.classList.remove("getting-feedback");
     } else if (event.target.hasAttribute("data-take-screenshot")) {
+        uiElement.classList.add("hidden");
         takeScreenshot(function(dataUrl) {
-            var input = uiElement.querySelector("[data-feedback]");
-            var paragraph = document.createElement("p");
-            var image = document.createElement("img");
-            image.setAttribute("height", "160");
-            image.src = dataUrl;
-            paragraph.appendChild(image);
-            input.appendChild(paragraph);
+            uiElement.classList.remove("hidden");
+            if (dataUrl) {
+                var input = uiElement.querySelector("[data-feedback]");
+                var paragraph = document.createElement("p");
+                var image = document.createElement("img");
+                image.setAttribute("height", "160");
+                image.src = dataUrl;
+                paragraph.appendChild(image);
+                input.appendChild(paragraph);
+            }
         });
     } else if (event.target.hasAttribute("data-fail-step")) {
         var stepIndex = +event.target.getAttribute("data-fail-step");
         // uiElement.classList.remove("getting-feedback");
-        advanceStep(stepIndex, "fail");
+        advanceStep(stepIndex, "fail", uiElement.querySelector("[data-feedback]").innerHTML);
     } else if (event.target.hasAttribute("data-next-step")) {
         var stepIndex = +event.target.getAttribute("data-next-step");
         advanceStep(stepIndex);

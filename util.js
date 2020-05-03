@@ -3,10 +3,12 @@ var GET_STATE = "GET_STATE";
 var SET_STATE = "SET_STATE";
 var SWITCH_TAB = "SWITCH_TAB";
 var SET_STEP = "SET_STEP";
+var START_TEST = "START_TEST";
 var STOP_TEST = "STOP_TEST";
 var RUN_IN_FRAMES = "RUN_IN_FRAMES";
 var RELAY_TO_FRAMES = "RELAY_TO_FRAMES";
 var RECORD_EVENT = "RECORD_EVENT";
+var SAVE_FEEDBACK = "SAVE_FEEDBACK";
 
 function $(id) {
     return document.getElementById(id);
@@ -241,20 +243,29 @@ function takeScreenshot(callback) {
     video.addEventListener("play", function() {
         // we delay this 400ms so the 'share screen' modal has time to go away.
         setTimeout(function() {
-            var settings = video.srcObject.getVideoTracks()[0].getSettings();
-            var canvas = document.createElement("canvas");
-            canvas.width = settings.width;
-            canvas.height = settings.height;
+            try {
+                var settings = video.srcObject.getVideoTracks()[0].getSettings();
+                var canvas = document.createElement("canvas");
+                canvas.width = settings.width;
+                canvas.height = settings.height;
 
-            var context = canvas.getContext("2d");
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            callback(canvas.toDataURL("image/jpeg"));
+                var context = canvas.getContext("2d");
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                callback(canvas.toDataURL("image/jpeg"));
+            } catch (e) {
+                console.error("Error: " + e);
+                callback();
+            }
 
-            var tracks = video.srcObject.getTracks();
-            tracks.forEach(function(track) {
-                track.stop();
-            });
-            video.srcObject = null;
+            try {
+                var tracks = video.srcObject.getTracks();
+                tracks.forEach(function(track) {
+                    track.stop();
+                });
+                video.srcObject = null;
+            } catch (e) {
+                console.error("Error: " + e);
+            }
         }, 400);
     });
 
@@ -270,7 +281,86 @@ function takeScreenshot(callback) {
             window.video = stream;
             video.srcObject = stream;
         });
-    } catch(err) {
-        console.error("Error: " + err);
+    } catch(e) {
+        console.error("Error: " + e);
+        callback();
     }
+}
+
+function makeCopyBlock(value) {
+    return `<span data-copy="${encodeURIComponent(value)}">${truncate(value, 40)}</span>`;
+}
+
+function makeSelectBlock(selector, label) {
+    if (selector) {
+        return `<span data-select="${encodeURIComponent(selector)}">${label || selector}</span>`;
+    } else {
+        return label;
+    }
+}
+
+function formatUrl(url) {
+    url = url.replace(/^http(s?):\/\//i, "");
+    if (url.length > 50 && url.includes("?")) {
+        url = url.split("?")[0] + "?&hellip;";
+    }
+    return url;
+}
+
+function buildInstructionHtml(instruction, index, addDoItButton) {
+    var content;
+    var status = instruction.status;
+    var canDo = instruction.canDo;
+    var type = instruction.type;
+    var url = instruction.url;
+    var selector = instruction.selector;
+    var label = instruction.label;
+    var text = instruction.text;
+
+    if (type == "navigate") {
+        content = `Navigate to <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a>`;
+    } else if (type == "new-tab") {
+        content = `Open <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a> in a new tab.`;
+    } else if (type == "switch-tab") {
+        content = `Switch to the ${label || url} tab.`;
+    } else if (type == "type") {
+        var pressEnter = instruction.doPressEnter ? " and press Enter" : "";
+        content = `Type ${makeCopyBlock(text)} in the ${makeSelectBlock(selector, label)}${pressEnter}.`;
+    } else if (type == "click") {
+        content = `Click on ${makeSelectBlock(selector, label)}.`;
+    } else if (type == "custom") {
+        content = text;
+    } else if (type == "observe") {
+        if (selector || label) {
+            content = `Find the text ${makeCopyBlock(text)} in ${makeSelectBlock(selector, label)}.`;
+        } else {
+            content = `Find the text ${makeCopyBlock(text)}`;
+        }
+    } else if (type == "find-element") {
+        content = `Find the ${makeSelectBlock(label)}`;
+    }
+
+    var highlightAttr = selector ? `data-highlight="${index}"` : "";
+
+    var note = instruction.note ? `<br/><span class="note">${instruction.note}</span>` : "";
+    var doIt = "";
+    if (addDoItButton) {
+        var doitLabel = "do it";
+        var doitClass = "";
+        if (status == "running") {
+            doitLabel = "...";
+        } else if (status == "success") {
+            doitLabel = "&check;";
+        } else if (status == "failed") {
+            doitLabel = "&times;";
+        } else if (!canDo) {
+            doitLabel = "?";
+            doitClass = "manual";
+        }
+        if (state.recording) {
+            doitClass += " disabled";
+        }
+        doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
+    }
+    return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
 }

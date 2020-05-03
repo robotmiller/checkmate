@@ -35,6 +35,9 @@ a, code, em, img, small, strong, label {
 .center {
     text-align: center;
 }
+.hidden {
+    display: none;
+}
 .minimized .title-bar {
     border-bottom: 0;
 }
