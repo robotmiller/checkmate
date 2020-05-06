@@ -1,5 +1,11 @@
 
 function test(title, func) {
+    if (typeof title != "string") {
+        throw new Error("INTERNAL: test(title, func) requires a string as its first parameter.");
+    }
+    if (typeof func != "function") {
+        throw new Error("INTERNAL: test(title, func) requires a function as its second parameter.");
+    }
     _test = {
         title: title,
         steps: []
@@ -9,6 +15,12 @@ function test(title, func) {
 }
     
 function step(title, func) {
+    if (typeof title != "string") {
+        throw new Error("INTERNAL: step(title, func) requires a string as its first parameter.");
+    }
+    if (typeof func != "function") {
+        throw new Error("INTERNAL: step(title, func) requires a function as its second parameter.");
+    }
     _instructions = [];
     func();
     _test.steps.push({
@@ -18,6 +30,9 @@ function step(title, func) {
 }
 
 function navigate(url, label) {
+    if (typeof url == "undefined") {
+        throw new Error("INTERNAL: missing 'url' value for navigate(url, [label])");
+    }
     // remove trailing slashes.
     url = url.replace(/\/$/, "");
     _instructions.push({
@@ -29,6 +44,9 @@ function navigate(url, label) {
 }
 
 function newTab(url, label) {
+    if (typeof url == "undefined") {
+        throw new Error("INTERNAL: missing 'url' value for newTab(url, [label])");
+    }
     // remove trailing slashes.
     url = url.replace(/\/$/, "");
     _instructions.push({
@@ -40,6 +58,9 @@ function newTab(url, label) {
 }
 
 function switchTab(url, label) {
+    if (typeof url == "undefined") {
+        throw new Error("INTERNAL: missing 'url' value for switchTab(url, [label])");
+    }
     _instructions.push({
         type: "switch-tab",
         url: url,
@@ -49,6 +70,12 @@ function switchTab(url, label) {
 }
 
 function type(text, selector, label) {
+    if (typeof selector == "undefined") {
+        throw new Error("INTERNAL: missing 'selector' value for type(text, selector, [label])");
+    }
+    if (typeof text == "undefined") {
+        throw new Error("INTERNAL: missing 'text' value for type(text, selector, [label])");
+    }
     // if the text ends with "{Enter}", that means we type the
     // text before it then dispatch an keyboard event.
     var enterRegex = /\{enter\}$/i;
@@ -68,6 +95,9 @@ function type(text, selector, label) {
 }
 
 function custom(text, func) {
+    if (typeof text == "undefined") {
+        throw new Error("INTERNAL: missing 'text' value for custom(text, [func])");
+    }
     var instruction = {
         type: "custom",
         text: text,
@@ -88,6 +118,9 @@ function custom(text, func) {
 }
 
 function click(selector, regex, label) {
+    if (typeof selector == "undefined") {
+        throw new Error("INTERNAL: missing 'selector' value for click(selector, [regex], [label])");
+    }
     // if you only provided two args, treat them as a selector and label.
     if (typeof label == "undefined") {
         label = regex;
@@ -106,6 +139,9 @@ function click(selector, regex, label) {
 }
 
 function observe(text, selector, label) {
+    if (typeof text == "undefined") {
+        throw new Error("INTERNAL: missing 'text' value for observe(text, [selector], [label])");
+    }
     var instruction = {
         type: "observe",
         text: text,
@@ -121,6 +157,9 @@ function observe(text, selector, label) {
 }
 
 function note(text) {
+    if (typeof text == "undefined") {
+        throw new Error("INTERNAL: missing 'text' value for note(text)");
+    }
     var lastInstruction = _instructions[_instructions.length - 1];
     if (lastInstruction) {
         lastInstruction.note = text;
@@ -132,6 +171,9 @@ function note(text) {
 }
 
 function findElement(selector, regex, label) {
+    if (typeof selector == "undefined") {
+        throw new Error("INTERNAL: missing 'selector' value for findElement(selector, [regex], label)");
+    }
     // if you only provided two args, treat them as a selector and label.
     if (typeof label == "undefined") {
         label = regex;

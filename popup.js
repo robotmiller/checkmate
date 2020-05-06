@@ -93,11 +93,25 @@ function handleEvalError(e) {
     // we can remove this because we'll add it before trying to eval again.
     window.removeEventListener("error", handleEvalError);
 
-    var textarea = $("manifest-code");
-    var line = typeof e.lineno == "number" ? e.lineno : e.lineNumber;
-    var column = typeof e.colno == "number" ? e.colno : e.columnNumber;
+    var isInternal = /^.*INTERNAL:/.test(e.message);
+    var line, column, message;
+    if (isInternal) {
+        window.stack = e.stack;
+        window.error_obj = e;
+        message = e.message.replace(/^.*INTERNAL:\s*/, "");
+
+        // find the line this call was made from.
+        var parts = e.error.stack.split(/\n/g)[2].split(/:|\)/g);
+        line = +parts[parts.length - 3];
+        column = +parts[parts.length - 2];
+    } else {
+        line = typeof e.lineno == "number" ? e.lineno : e.lineNumber;
+        column = typeof e.colno == "number" ? e.colno : e.columnNumber;
+        message = e.message;
+    }
 
     // highlight the error range.
+    var textarea = $("manifest-code");
     var lines = textarea.value.split("\n");
     var index = line - 1 + column;
     for (var i = 1; i < line; i++) {
@@ -109,8 +123,7 @@ function handleEvalError(e) {
     var lineHeight = (textarea.scrollHeight - 10) / lines.length;
     textarea.scrollTop = (line - 1) * lineHeight - lineHeight * 3 + 5;
     textarea.scrollLeft = column * 10;
-
-    showError(`Line ${line}, column ${column}: ${e.message}`, textarea);
+    showError(`Line ${line}, column ${column}: ${message}`, textarea);
 }
 
 // this is how we catch errors processing the manifest so
@@ -119,7 +132,9 @@ function handleEvalError(e) {
 function showError(message, element) {
     $("manifest-error").innerHTML = message;
     show("manifest-error");
-    element.classList.add("error");
+    if (element) {
+        element.classList.add("error");
+    }
 }
 
 function hideError() {
@@ -141,6 +156,9 @@ function processManifest(code) {
     window.removeEventListener("error", handleEvalError);
     
     // todo: check for the case where no tests got created.
+    if (!_tests.length) {
+        return showError("No tests were found.", $("manifest-code"));
+    }
 
     // if we reach this point, the eval worked.
     chrome.runtime.sendMessage({
@@ -192,10 +210,7 @@ $("manifest-url").addEventListener("keydown", function(event) {
 });
 
 $("start-test").onclick = function() {
-    var manifestCode = $("manifest-code").value;
-    if (manifestCode) {
-        processManifest(manifestCode);
-    }
+    processManifest($("manifest-code").value);
 };
 
 $("record-test").onclick = function() {
