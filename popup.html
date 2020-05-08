@@ -32,7 +32,6 @@
 
             body {
                 line-height: 1.4;
-                padding: 20px;
             }
             ol, ul {
                 list-style: none;
@@ -70,6 +69,7 @@
                 color: #222;
                 width: 400px;
                 height: 360px;
+                overflow: hidden;
             }
             body.full-page {
                 width: 800px;
@@ -77,7 +77,7 @@
 
             /* general styling */
             input, select, textarea {
-                border: 1px solid #888;
+                border: 1px solid #444;
                 border-radius: 3px;
                 box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
                 padding: 5px 8px;
@@ -141,13 +141,29 @@
                 background: #fff;
             }
 
+            #test-form {
+                padding: 20px 20px 0;
+            }
             #manifest-code {
                 height: 200px;
                 overflow: auto;
             }
 
+            #test-status {
+                padding: 0 20px;
+            }
             #test-details {
+                box-sizing: border-box;
                 min-height: 240px;
+                max-height: 440px;
+                overflow: auto;
+                padding: 0 20px;
+                margin-bottom: 20px;
+                border-top: 1px solid #444;
+                border-bottom: 1px solid #444;
+            }
+            #test-details.full-page {
+                max-height: initial;
             }
 
             #manifest-error {
@@ -160,10 +176,11 @@
 
             .test {
                 border: 1px solid #444;
+                border-radius: 3px;
                 box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
                 margin: 20px 0;
                 width: 100%;
-                border-radius: 3px;
+                overflow: hidden;
             }
             .test p {
                 margin: 0;
@@ -171,7 +188,9 @@
             .test .title {
                 padding: 8px 10px;
                 font-weight: bold;
-                border-bottom: 1px solid #444;
+            }
+            .test .steps {
+                border-top: 1px solid #444;
             }
             .test-title {
                 font-size: 15px;
@@ -207,8 +226,11 @@
             }
 
             .step {
-                padding: 10px;
+                padding: 10px 10px 5px 10px;
                 border-left: 10px solid #ddd;
+            }
+            .step + .step {
+                padding: 5px 10px;
             }
             .step.fail {
                 border-left: 10px solid #f80;
@@ -249,7 +271,10 @@
                 list-style: decimal;
             }
             .instructions li {
-                margin: 5px 0;
+                margin: 3px 0;
+            }
+            .instructions * {
+                font-size: 11px;
             }
 
             [data-copy] {
@@ -268,7 +293,7 @@
             </label>
             <label>
                 Or paste the manifest's code here:
-                <textarea id="manifest-code" wrap="off" autocomplete="off"></textarea>
+                <textarea id="manifest-code" wrap="off" autocomplete="off" placeholder="test(&quot;My Test&quot;, () =&gt; {&#10;  step(&quot;Log in&quot;, () =&gt; {&#10;    type(&quot;user@example.com&quot;, &quot;#email&quot;);&#10;    type(&quot;abcd1234&quot;, &quot;#password&quot;);&#10;    click(&quot;button&quot;, /log in/i);&#10;  });&#10;});"></textarea>
                 <div id="manifest-error"></div>
             </label>
             <div class="center bottom-bar">

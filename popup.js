@@ -36,8 +36,8 @@ function showTestDetails() {
         var icons = test.steps.map(function(step, stepIndex) {
             return makeStepIcon(step, stepIndex, testIndex);
         }).join("");
-        var testTitle = `<span class="test-title" data-test="${testIndex}">${test.title}</span>`;
-        html.push(`<div class="title">${testTitle}${icons}</div>`)
+        var testTitle = `<span class="test-title" data-toggle-steps="">${test.title}</span>`;
+        html.push(`<div class="title">${testIndex + 1}. ${testTitle}${icons}</div>`)
 
         // include feedback about each test.
         html.push(`<div class="steps">`);
@@ -269,6 +269,9 @@ document.body.addEventListener("click", function(event) {
         state.testIndex = testIndex;
         state.stepIndex = stepIndex;
         showTestDetails();
+    } else if (event.target.hasAttribute("data-toggle-steps")) {
+        var steps = event.target.parentElement.nextSibling;
+        steps.classList.toggle("is-hidden");
     } else if (event.target.matches("blockquote img")) {
         event.target.classList.toggle("maximized");
     }
