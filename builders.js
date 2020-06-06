@@ -109,6 +109,8 @@ function custom(text, func) {
             .replace(/^(?:function\s*[^\(]*)?\s*\(([^)]*)\)\s*(?:=>)?\s*\{/i, function(text, argString) {
                 instruction.args = argString.split(",").map(function(arg) {
                     return arg.trim();
+                }).filter(function(arg) {
+                    return !!arg;
                 });
                 return "";
             }).replace(/\}\s*$/i, "").trim();

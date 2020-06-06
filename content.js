@@ -1,4 +1,8 @@
 
+var LEFT_RIGHT_TOOLTIP = "Move the display to the left or right.";
+var AUTO_MODE_TOOLTIP = "Automatically execute instructions.";
+var EXPAND_COLLAPSE_TOOLTIP = "Expand or collapse this UI.";
+
 function showTooltip(element, message) {
     // if the element already has a tooltip then we just update that element.
     var tooltip;
@@ -78,17 +82,14 @@ function buildStepHtml() {
     
     var html = [];
 
-    var leftRightTooltip = "Move the display to the left or right.";
-    var autoModeTooltip = "Automatically execute instructions.";
-
     // make the title bar:
     html.push(`<div class="title-bar flex">`);
-    html.push(`<span data-lr-toggle="" ${tooltipAttr(leftRightTooltip)}>&rightleftarrows;</span>`);
-    html.push(`<span data-minimize="">${test.title}</span>`);
+    html.push(`<span data-lr-toggle="" ${tooltipAttr(LEFT_RIGHT_TOOLTIP)}>&rightleftarrows;</span>`);
+    html.push(`<span data-minimize="" ${tooltipAttr(EXPAND_COLLAPSE_TOOLTIP)}>${test.title}</span>`);
     if (!state.recording) {
         // make icons for each step.
         html.push(`<span class="grow">${test.steps.map(makeStepIcon).join("")}</span>`);
-        html.push(`<span ${tooltipAttr(autoModeTooltip)} data-automatic="${state.automatic}">&orarr;</span>`);
+        html.push(`<span ${tooltipAttr(AUTO_MODE_TOOLTIP)} data-automatic="${state.automatic}">&orarr;</span>`);
     }
     html.push(`</div>`); // end of title bar.
 
@@ -254,6 +255,7 @@ function doInstruction(instructionIndex) {
 
     var func = doers[instruction.type];
     if (func) {
+        // todo: figure out why this try/catch is commented out.
         // try {
             func(instruction, setStatus, instructionIndex, tryInAllFrames);
         // } catch (e) {

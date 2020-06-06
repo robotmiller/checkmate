@@ -277,6 +277,6 @@ document.body.addEventListener("click", function(event) {
     }
 }, false);
 
-if (window.innerWidth > 430) {
+if (window.innerWidth > 530) {
     document.body.className = "full-page";
 }
