@@ -352,9 +352,9 @@ button.warn:active {
     border-radius: 3px;
     box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
     padding: 5px 8px;
-    width: calc(100% - 40px);
-    height: calc(100% - 74px);
-    margin: 10px 20px;
+    width: calc(100% - 20px);
+    height: calc(100% - 71px);
+    margin: 10px;
     font-family: Consolas, monaco, "Courier New", monospace;
     overflow: auto;
 }

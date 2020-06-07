@@ -68,7 +68,7 @@
             body {
                 color: #222;
                 width: 480px;
-                height: 360px;
+                /* height: 360px; */
                 overflow: hidden;
             }
             body.full-page {
@@ -111,6 +111,7 @@
             label {
                 display: block;
                 margin-bottom: 10px;
+                position: relative;
             }
             button {
                 border: 1px solid #444;
@@ -139,6 +140,34 @@
             }
             button.secondary:active {
                 background: #fff;
+            }
+
+            button.small {
+                border: 0;
+                border-radius: 4px;
+                background: #446;
+                color: #fff;
+                font-weight: bold;
+                outline: none;
+                cursor: pointer;
+                box-sizing: border-box;
+                width: 36px;
+                text-align: center;
+                font-size: 11px;
+                line-height: 13px;
+                padding: 3px 6px;
+                box-shadow: none;
+            }
+            button.small.success {
+                background: #4a7;
+            }
+            button.small.error {
+                background: #e07800;
+            }
+            #load-manifest {
+                position: absolute;
+                right: 6px;
+                bottom: 4px;
             }
 
             #test-form {
@@ -290,6 +319,7 @@
             <label>
                 Enter the URL of your test manifest here:
                 <input type="text" id="manifest-url" placeholder="Paste the URL and press Enter to load the manifest" />
+                <button class="small" id="load-manifest">load</button>
             </label>
             <label>
                 Or paste the manifest's code here:

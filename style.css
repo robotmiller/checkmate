@@ -349,9 +349,9 @@
     border-radius: 3px !important;
     box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px !important;
     padding: 5px 8px !important;
-    width: calc(100% - 40px) !important;
-    height: calc(100% - 74px) !important;
-    margin: 10px 20px !important;
+    width: calc(100% - 20px) !important;
+    height: calc(100% - 71px) !important;
+    margin: 10px !important;
     font-family: Consolas, monaco, "Courier New", monospace !important;
     overflow: auto !important;
 }

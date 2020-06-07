@@ -433,8 +433,14 @@ function handleClick(event) {
             }, 800);
         }
     } else if (event.target.hasAttribute("data-lr-toggle")) {
-        // todo: make this persist through page refreshes.
         uiElement.classList.toggle("left");
+
+        // make this persist through page refreshes.
+        if (uiElement.classList.contains("left")) {
+            localStorage.__cm_left = true;
+        } else {
+            delete localStorage.__cm_left;
+        }
     } else if (event.target.hasAttribute("data-minimize")) {
         // todo: make this persist through page refreshes.
         uiElement.classList.toggle("minimized");
@@ -563,6 +569,10 @@ function buildOrUpdateUI() {
 
         uiElement = document.createElement("div");
         uiElement.className = "cm_ui";
+        if (localStorage.__cm_left) {
+            uiElement.classList.add("left");
+        }
+
         uiElement.addEventListener("click", handleClick, false);
         uiElement.addEventListener("mousedown", handleMouseDown, false);
         uiElement.addEventListener("mouseover", handleMouseOver, false);

@@ -122,7 +122,7 @@ function handleEvalError(e) {
 
     var lineHeight = (textarea.scrollHeight - 10) / lines.length;
     textarea.scrollTop = (line - 1) * lineHeight - lineHeight * 3 + 5;
-    textarea.scrollLeft = column * 10;
+    textarea.scrollLeft = (column - 1) * 10;
     showError(`Line ${line}, column ${column}: ${message}`, textarea);
 }
 
@@ -183,31 +183,54 @@ function processManifest(code) {
 }
 
 function loadManifest(url) {
+    if (!url) {
+        return;
+    }
+
+    // indicate that we're loading the manifest.
     hideError();
+    $("load-manifest").textContent = "...";
+    $("load-manifest").classList.remove("error", "success");
     $("manifest-code").value = "";
+
+    var showNetworkError = function(error) {
+        $("load-manifest").innerHTML = "&times;";
+        $("load-manifest").classList.remove("success");
+        $("load-manifest").classList.add("error");
+        showError("Network error.", $("manifest-url"));
+    };
     
     fetch(url).then(function(response) {
         window.res = response;
         if (response.ok) {
             return response.text();
         } else {
-            showError("Network error.", $("manifest-url"));
+            showNetworkError();
         }
     }).then(function(text) {
-        $("manifest-code").value = text;
-    }).catch(function(error) {
-        showError("Network error.", $("manifest-url"));
-    });
+        if (text) {
+            $("load-manifest").innerHTML = "&check;";
+            $("load-manifest").classList.remove("error");
+            $("load-manifest").classList.add("success");
+            $("manifest-code").value = text;
+        } else {
+            $("manifest-code").value = "";
+        }
+    }).catch(showNetworkError);
 }
 
 $("manifest-url").addEventListener("keydown", function(event) {
     if (event.key == "Enter") {
-        var url = $("manifest-url").value;
-        if (url) {
-            loadManifest(url);
-        }
+        loadManifest($("manifest-url").value);
+    } else {
+        $("load-manifest").textContent = "load";
+        $("load-manifest").classList.remove("error", "success");
     }
 });
+
+$("load-manifest").onclick = function() {
+    loadManifest($("manifest-url").value);
+};
 
 $("start-test").onclick = function() {
     processManifest($("manifest-code").value);
