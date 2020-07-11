@@ -2,7 +2,7 @@
 var state, feedback;
 
 // these are updated by the functions in builders.js.
-var _tests, _test, _instructions;
+var _tests, _test, _instructions, _usesFocus;
 
 function hide(id) {
     $(id).classList.add("is-hidden");
@@ -15,6 +15,7 @@ function show(id) {
 function makeStepIcon(step, stepIndex, testIndex) {
     var isActive = testIndex == state.testIndex && stepIndex == state.stepIndex;
     var result = step.result || "";
+    var tooltip = `Step ${stepIndex + 1}: ${step.title}`;
     var label;
     if (result == "pass") {
         label = "&check;";
@@ -25,7 +26,7 @@ function makeStepIcon(step, stepIndex, testIndex) {
     } else {
         label = "&nbsp;";
     }
-    return `<span class="step-icon ${result} ${isActive ? "active": ""}" data-test="${testIndex}" data-step="${stepIndex}">${label}</span>`;
+    return `<span class="step-icon ${result} ${isActive ? "active": ""}" ${tooltipAttr(tooltip)} data-test="${testIndex}" data-step="${stepIndex}">${label}</span>`;
 }
 
 function showTestDetails() {
@@ -145,6 +146,7 @@ function hideError() {
 
 function processManifest(code) {
     _tests = [];
+    _usesFocus = false;
     
     // in case we had been showing an error, clear it.
     hideError();
@@ -154,6 +156,22 @@ function processManifest(code) {
     window.addEventListener("error", handleEvalError);
     eval(code);
     window.removeEventListener("error", handleEvalError);
+
+    // if one or more tests have focus, remove all unfocused tests.
+    if (_usesFocus) {
+        _tests = _tests.filter(function(test) {
+            return test.focus;
+        });
+    }
+
+    // for each test that has focused steps, remove the unfocused steps.
+    _tests.forEach(function(test) {
+        if (test.usesFocus) {
+            test.steps = test.steps.filter(function(step) {
+                return step.focus;
+            });
+        }
+    });
     
     // todo: check for the case where no tests got created.
     if (!_tests.length) {
@@ -299,6 +317,21 @@ document.body.addEventListener("click", function(event) {
         event.target.classList.toggle("maximized");
     }
 }, false);
+
+// make tooltips work.
+function handleMouseOver(event) {
+    if (event.target.hasAttribute("data-tooltip")) {
+        showTooltip(event.target, event.target.getAttribute("data-tooltip"));
+    }
+}
+function handleMouseOut(event) {
+    if (event.target.hasAttribute("data-tooltip")) {
+        hideTooltip(event.target);
+    }
+}
+
+document.addEventListener("mouseover", handleMouseOver, false);
+document.addEventListener("mouseout", handleMouseOut, false);
 
 if (window.innerWidth > 530) {
     document.body.className = "full-page";

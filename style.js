@@ -230,7 +230,7 @@ button.big {
     position: relative;
     cursor: pointer;
 }
-button.big + .big {
+* + .big {
     margin-left: 6px;
 }
 button.big:active {

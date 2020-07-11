@@ -338,6 +338,13 @@ function buildInstructionHtml(instruction, index, addDoItButton) {
         }
     } else if (type == "find-element") {
         content = `Find the ${makeSelectBlock(label)}`;
+    } else if (type == "record") {
+        content = `Record ${text}.`;
+        if (!canDo) {
+            content += ` <input type="text" />`;
+        } else {
+            // todo: still show an input but you can't type in it.
+        }
     }
 
     var highlightAttr = selector ? `data-highlight="${index}"` : "";
@@ -363,4 +370,39 @@ function buildInstructionHtml(instruction, index, addDoItButton) {
         doIt = `<button class="${status || ""} ${doitClass}" data-do-it="${index}">${doitLabel}</button>`;
     }
     return content ? `<div class="instruction flex" ${highlightAttr}><span class="grow">${content}${note}</span>${doIt}</div>` : "";
+}
+
+function showTooltip(element, message) {
+    // if the element already has a tooltip then we just update that element.
+    var tooltip;
+    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
+        tooltip = element.nextSibling;
+    } else {
+        tooltip = document.createElement("div");
+    }
+    tooltip.classList.add("tooltip");
+    tooltip.innerHTML = decodeURIComponent(message);
+
+    var rect = element.getBoundingClientRect();
+    tooltip.style.left = (rect.x + rect.width / 2) + "px";
+    tooltip.style.top = (rect.y - 8) + "px";
+
+    var tooltipX = rect.x + rect.width / 2;
+    if (tooltipX < 50) {
+        tooltip.classList.add("left");
+    } else {
+        tooltip.classList.remove("left");
+    }
+
+    element.insertAdjacentElement("afterend", tooltip);
+}
+
+function hideTooltip(element) {
+    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
+        element.parentElement.removeChild(element.nextSibling);
+    }
+}
+
+function tooltipAttr(tooltip) {
+    return `data-tooltip="${encodeURIComponent(tooltip)}"`;
 }

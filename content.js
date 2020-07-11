@@ -3,41 +3,6 @@ var LEFT_RIGHT_TOOLTIP = "Move the display to the left or right.";
 var AUTO_MODE_TOOLTIP = "Automatically execute instructions.";
 var EXPAND_COLLAPSE_TOOLTIP = "Expand or collapse this UI.";
 
-function showTooltip(element, message) {
-    // if the element already has a tooltip then we just update that element.
-    var tooltip;
-    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
-        tooltip = element.nextSibling;
-    } else {
-        tooltip = document.createElement("div");
-    }
-    tooltip.classList.add("tooltip");
-    tooltip.innerHTML = decodeURIComponent(message);
-
-    var rect = element.getBoundingClientRect();
-    tooltip.style.left = (rect.x + rect.width / 2) + "px";
-    tooltip.style.top = (rect.y - 8) + "px";
-
-    var tooltipX = rect.x + rect.width / 2;
-    if (tooltipX < 50) {
-        tooltip.classList.add("left");
-    } else {
-        tooltip.classList.remove("left");
-    }
-
-    element.insertAdjacentElement("afterend", tooltip);
-}
-
-function hideTooltip(element) {
-    if (element.nextSibling && element.nextSibling.classList.contains("tooltip")) {
-        element.parentElement.removeChild(element.nextSibling);
-    }
-}
-
-function tooltipAttr(tooltip) {
-    return `data-tooltip="${encodeURIComponent(tooltip)}"`;
-}
-
 function makeStepIcon(step, index) {
     var isActive = index == state.stepIndex;
     var result = step.result || "";
@@ -106,6 +71,10 @@ function buildStepHtml() {
     var backButton = (testIndex > 0 || stepIndex > 0) ? `<button class="big" data-back-step="${stepIndex}">Back</button>` : "";
     html.push(`<span class="grow">${backButton}</span>`);
     if (state.recording) {
+        // todo: get better icons for these.
+        // todo: make these buttons work.
+        // html.push(`<button class="big">&#128065;</button>`);
+        // html.push(`<button class="big">&#9881;</button>`);
         html.push(`<button class="big" data-view-code="">View Code</button>`);
         if (!state.doneRecording) {
             html.push(`<button class="big" data-stop-recording="">Stop Recording</button>`);

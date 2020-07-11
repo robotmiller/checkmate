@@ -13,7 +13,7 @@ function test(title, func) {
     _tests.push(_test);
     func();
 }
-    
+
 function step(title, func) {
     if (typeof title != "string") {
         throw new Error("INTERNAL: step(title, func) requires a string as its first parameter.");
@@ -27,6 +27,19 @@ function step(title, func) {
         title: title,
         instructions: _instructions
     });
+}
+
+// these make us "focus" on a single test or step which means we ignore all others.
+// if multiple tests are focused, then we'll include all of those.
+function ftest(title, func) {
+    test(title, func);
+    _test.focus = true;
+    _usesFocus = true;
+}
+function fstep(title, func) {
+    step(title, func);
+    _test.steps[_test.steps.length - 1].focus = true;
+    _test.usesFocus = true;
 }
 
 function navigate(url, label) {
@@ -94,6 +107,19 @@ function type(text, selector, label) {
     });
 }
 
+function _addFunc(instruction, func) {
+    instruction.args = [];
+    instruction.func = func.toString()
+        .replace(/^(?:function\s*[^\(]*)?\s*\(([^)]*)\)\s*(?:=>)?\s*\{/i, function(text, argString) {
+            instruction.args = argString.split(",").map(function(arg) {
+                return arg.trim();
+            }).filter(function(arg) {
+                return !!arg;
+            });
+            return "";
+        }).replace(/\}\s*$/i, "").trim();
+}
+
 function custom(text, func) {
     if (typeof text == "undefined") {
         throw new Error("INTERNAL: missing 'text' value for custom(text, [func])");
@@ -104,16 +130,7 @@ function custom(text, func) {
         canDo: false
     };
     if (func) {
-        instruction.args = [];
-        instruction.func = func.toString()
-            .replace(/^(?:function\s*[^\(]*)?\s*\(([^)]*)\)\s*(?:=>)?\s*\{/i, function(text, argString) {
-                instruction.args = argString.split(",").map(function(arg) {
-                    return arg.trim();
-                }).filter(function(arg) {
-                    return !!arg;
-                });
-                return "";
-            }).replace(/\}\s*$/i, "").trim();
+        _addFunc(instruction, func);
         instruction.canDo = true;
     }
     _instructions.push(instruction);
@@ -189,6 +206,18 @@ function findElement(selector, regex, label) {
     };
     if (regex) {
         instruction.regex = regex;
+    }
+    _instructions.push(instruction);
+}
+
+function record(text, func) {
+    var instruction = {
+        type: "record",
+        text: text
+    };
+    if (func) {
+        _addFunc(instruction, func);
+        instruction.canDo = true;
     }
     _instructions.push(instruction);
 }
