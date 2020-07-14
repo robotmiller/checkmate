@@ -104,6 +104,13 @@
             .is-hidden {
                 display: none;
             }
+            .transparently {
+                transition: 0.3s ease-in-out;
+            }
+            .is-hidden.transparently {
+                display: block;
+                opacity: 0;
+            }
             .center {
                 text-align: center;
             }
@@ -348,10 +355,14 @@
                 left: 25px;
             }
 
+            #loading {
+                height: 359px;
+            }
+
         </style>
     </head>
     <body>
-        <div id="test-form" class="is-hidden">
+        <div id="test-form" class="is-hidden transparently">
             <label>
                 Enter the URL of your test manifest here:
                 <input type="text" id="manifest-url" placeholder="Paste the URL and press Enter to load the manifest" />
@@ -359,7 +370,7 @@
             </label>
             <label>
                 Or paste the manifest's code here:
-                <textarea id="manifest-code" wrap="off" autocomplete="off" placeholder="test(&quot;My Test&quot;, () =&gt; {&#10;  step(&quot;Log in&quot;, () =&gt; {&#10;    type(&quot;user@example.com&quot;, &quot;#email&quot;);&#10;    type(&quot;abcd1234&quot;, &quot;#password&quot;);&#10;    click(&quot;button&quot;, /log in/i);&#10;  });&#10;});"></textarea>
+                <textarea id="manifest-code" wrap="off" autocomplete="off" spellcheck="false" placeholder="test(&quot;My Test&quot;, () =&gt; {&#10;  step(&quot;Log in&quot;, () =&gt; {&#10;    type(&quot;user@example.com&quot;, &quot;#email&quot;);&#10;    type(&quot;abcd1234&quot;, &quot;#password&quot;);&#10;    click(&quot;button&quot;, /log in/i);&#10;  });&#10;});"></textarea>
                 <div id="manifest-error"></div>
             </label>
             <div class="center bottom-bar">
@@ -378,9 +389,6 @@
                 <button id="start-new-test" class="is-hidden">Start Another Test</button>
                 <button id="stop-test" class="warning">Stop Test</button>
             </div>
-        </div>
-        <div id="loading">
-            Loading...
         </div>
         <script src="util.js"></script>
         <script src="popup.js"></script>

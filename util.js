@@ -113,7 +113,7 @@ function findElementWithText(selector, text) {
 
 function pressEnter(element) {
     element.focus();
-    ["keydown", "keypress", "keyup"].forEach(function(eventType) {
+    ["keydown", "keypress", "keyup", "submit"].forEach(function(eventType) {
         element.dispatchEvent(
             new KeyboardEvent(eventType, {
                 code: "Enter",
@@ -151,6 +151,11 @@ function pressEnter(element) {
             })
         );
     });
+
+    const form = element.closest("form");
+    if (form) {
+        form.dispatchEvent(new SubmitEvent("submit", { submitter: element }));
+    }
 }
 
 function typeInElement(text, element, doPressEnter) {
@@ -254,7 +259,7 @@ function takeScreenshot(callback) {
                 callback(canvas.toDataURL("image/jpeg"));
             } catch (e) {
                 console.error("Error: " + e);
-                callback();
+                callback(null);
             }
 
             try {

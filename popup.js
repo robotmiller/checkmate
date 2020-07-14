@@ -5,11 +5,22 @@ var state, feedback;
 var _tests, _test, _instructions, _usesFocus;
 
 function hide(id) {
-    $(id).classList.add("is-hidden");
+    var element = $(id);
+    if (element) {
+        element.classList.add("is-hidden");
+        element.classList.remove("transparently");
+    } else {
+        console.warn("couldn't find element #" + id);
+    }
 }
 
 function show(id) {
-    $(id).classList.remove("is-hidden");
+    var element = $(id);
+    if (element) {
+        element.classList.remove("is-hidden");
+    } else {
+        console.warn("couldn't find element #" + id);
+    }
 }
 
 function makeStepIcon(step, stepIndex, testIndex) {
@@ -37,7 +48,7 @@ function showTestDetails() {
         var icons = test.steps.map(function(step, stepIndex) {
             return makeStepIcon(step, stepIndex, testIndex);
         }).join("");
-        var testTitle = `<span class="test-title" data-toggle-steps="">${test.title}</span>`;
+        var testTitle = `<span class="test-title" data-test="${testIndex}">${test.title}</span>`;
         html.push(`<div class="title">${testIndex + 1}. ${testTitle}${icons}</div>`)
 
         // include feedback about each test.
@@ -68,7 +79,7 @@ function gotNewData(message) {
     
     hide("loading");
     if (message.state && message.state.tests && message.state.tests.length) {
-        hide("test-form")
+        hide("test-form");
         show("test-running");
 
         // if the tests are all done, say so.
@@ -85,6 +96,8 @@ function gotNewData(message) {
         show("test-form");
         hide("test-running");
         $("manifest-url").focus();
+        $("manifest-url").value = (state && state.url) || "";
+        $("manifest-code").value = (state && state.code) || "";
     }
 }
 
@@ -123,7 +136,7 @@ function handleEvalError(e) {
 
     var lineHeight = (textarea.scrollHeight - 10) / lines.length;
     textarea.scrollTop = (line - 1) * lineHeight - lineHeight * 3 + 5;
-    textarea.scrollLeft = (column - 1) * 10;
+    textarea.scrollLeft = (column - 1) * 7 - 250;
     showError(`Line ${line}, column ${column}: ${message}`, textarea);
 }
 
@@ -185,6 +198,8 @@ function processManifest(code) {
             testIndex: 0,
             stepIndex: 0,
             tests: _tests,
+            code: code,
+            url: (state && state.url) || ""
         }
     }, function(message) {
         if (message.state && message.state.tests) {
@@ -210,6 +225,7 @@ function loadManifest(url) {
     $("load-manifest").textContent = "...";
     $("load-manifest").classList.remove("error", "success");
     $("manifest-code").value = "";
+    state.url = url;
 
     var showNetworkError = function(error) {
         $("load-manifest").innerHTML = "&times;";
@@ -285,8 +301,13 @@ $("record-test").onclick = function() {
 
 $("stop-test").onclick = $("start-new-test").onclick = function() {
     chrome.runtime.sendMessage({ type: STOP_TEST }, function() {
-        state = null;
+        state = {
+            code: state.code || "",
+            url: state.url || ""
+        };
         show("test-form");
+        $("manifest-code").value = state.code;
+        $("manifest-url").value = state.url;
         hide("test-running");
     });
 };

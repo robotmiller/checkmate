@@ -158,6 +158,10 @@ function advanceStep(stepIndex, result, feedback) {
     } else {
         state.stepIndex = stepIndex + 1;
     }
+
+    // turn off automatic mode when switching steps.
+    state.automatic = false;
+
     syncState();
     buildOrUpdateUI();
 }
@@ -169,6 +173,10 @@ function backStep(stepIndex, testIndex) {
         state.testIndex = testIndex - 1;
         state.stepIndex = state.tests[state.testIndex].steps.length - 1;
     }
+
+    // turn off automatic mode when switching steps.
+    state.automatic = false;
+
     syncState();
     buildOrUpdateUI();
 }
@@ -381,6 +389,11 @@ setInterval(function() {
         if (!curr.canDo) {
             continue;
         }
+        // if the prior instruction failed, turn automatic mode off.
+        if (prev && prev.status == "failed") {
+            state.automatic = false;
+            syncState();
+        }
         // only try this instruction if the previous one was successful.
         // if curr is the first instruction, prev will be null and that means we can try this.
         if (!prev || prev.status == "success") {
@@ -449,6 +462,10 @@ function handleClick(event) {
                 image.setAttribute("height", "160");
                 image.src = dataUrl;
                 paragraph.appendChild(image);
+                input.appendChild(paragraph);
+            } else {
+                var paragraph = document.createElement("p");
+                paragraph.innerText = "We encountered an error while trying to capture the screenshot. You can take one manually and paste it in here though.";
                 input.appendChild(paragraph);
             }
         });
@@ -533,7 +550,7 @@ function buildOrUpdateUI() {
         document.body.appendChild(rootElement);
 
         var style = document.createElement("style");
-        style.innerText = STYLE;
+        style.innerHTML = STYLE;
         shadow.appendChild(style);
 
         uiElement = document.createElement("div");

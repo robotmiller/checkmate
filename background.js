@@ -167,7 +167,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         updateAllTabs();
     } else if (message.type == STOP_TEST) {
         state = {
-            tests: []
+            tests: [],
+            code: state.code || "",
+            url: state.url || ""
         };
         sendResponse();
         updateAllTabs();
