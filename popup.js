@@ -75,7 +75,7 @@ function showTestDetails() {
 }
 
 function gotNewData(message) {
-    console.log("got data", message);
+    // console.log("got data", message);
     
     hide("loading");
     if (message.state && message.state.tests && message.state.tests.length) {
@@ -106,6 +106,9 @@ chrome.runtime.sendMessage({ type: GET_STATE, isPopup: true }, gotNewData);
 function handleEvalError(e) {
     // we can remove this because we'll add it before trying to eval again.
     window.removeEventListener("error", handleEvalError);
+
+    _test = null;
+    _instructions = null;
 
     var isInternal = /^.*INTERNAL:/.test(e.message);
     var line, column, message;

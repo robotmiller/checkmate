@@ -102,7 +102,7 @@ function generateInstructions() {
 }
 
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    console.log("got message", message);
+    // console.log("got message", message);
     if (message.type == GET_STATE) {
         // if this is for the popup and we're done, include feedback too.
         if (message.isPopup && state && state.done) {
@@ -228,7 +228,7 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         });
     } else if (message.type == RECORD_EVENT) {
         message.event.tab = sender.tab.id;
-        console.log("got event", message.event);
+        // console.log("got event", message.event);
 
         eventsBuffer.push(message.event);
         var instructions = generateInstructions();

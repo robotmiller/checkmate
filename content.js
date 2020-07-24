@@ -567,7 +567,13 @@ function buildOrUpdateUI() {
     } else {
         uiElement.classList.remove("getting-feedback");
     }
-    uiElement.innerHTML = html;
+
+    if (html) {
+        uiElement.innerHTML = html;
+        uiElement.style.display = "";
+    } else {
+        uiElement.style.display = "none";
+    }
     setTimeout(function() {
         var feedbackInput = uiElement.querySelector("[data-feedback]");
         if (feedbackInput) {

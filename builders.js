@@ -6,12 +6,19 @@ function test(title, func) {
     if (typeof func != "function") {
         throw new Error("INTERNAL: test(title, func) requires a function as its second parameter.");
     }
+    if (_test) {
+        throw new Error("INTERNAL: test() cannot be called from inside another test.");
+    }
     _test = {
         title: title,
         steps: []
     };
     _tests.push(_test);
     func();
+    if (!_test.steps.length) {
+        throw new Error("INTERNAL: this test needs at least one step.");
+    }
+    _test = null;
 }
 
 function step(title, func) {
@@ -21,12 +28,22 @@ function step(title, func) {
     if (typeof func != "function") {
         throw new Error("INTERNAL: step(title, func) requires a function as its second parameter.");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: step() must be called inside a test.");
+    }
+    if (_instructions) {
+        throw new Error("INTERNAL: step() cannot be called from inside another step.");
+    }
     _instructions = [];
     func();
+    if (!_instructions.length) {
+        throw new Error("INTERNAL: this step needs at least one instruction.");
+    }
     _test.steps.push({
         title: title,
         instructions: _instructions
     });
+    _instructions = null;
 }
 
 // these make us "focus" on a single test or step which means we ignore all others.
@@ -46,6 +63,12 @@ function navigate(url, label) {
     if (typeof url == "undefined") {
         throw new Error("INTERNAL: missing 'url' value for navigate(url, [label])");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: navigate() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: navigate() cannot be called outside of a step.");
+    }
     // remove trailing slashes.
     url = url.replace(/\/$/, "");
     _instructions.push({
@@ -59,6 +82,12 @@ function navigate(url, label) {
 function newTab(url, label) {
     if (typeof url == "undefined") {
         throw new Error("INTERNAL: missing 'url' value for newTab(url, [label])");
+    }
+    if (!_test) {
+        throw new Error("INTERNAL: newTab() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: newTab() cannot be called outside of a step.");
     }
     // remove trailing slashes.
     url = url.replace(/\/$/, "");
@@ -74,6 +103,12 @@ function switchTab(url, label) {
     if (typeof url == "undefined") {
         throw new Error("INTERNAL: missing 'url' value for switchTab(url, [label])");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: switchTab() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: switchTab() cannot be called outside of a step.");
+    }
     _instructions.push({
         type: "switch-tab",
         url: url,
@@ -88,6 +123,12 @@ function type(text, selector, label) {
     }
     if (typeof text == "undefined") {
         throw new Error("INTERNAL: missing 'text' value for type(text, selector, [label])");
+    }
+    if (!_test) {
+        throw new Error("INTERNAL: type() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: type() cannot be called outside of a step.");
     }
     // if the text ends with "{Enter}", that means we type the
     // text before it then dispatch an keyboard event.
@@ -124,6 +165,12 @@ function custom(text, func) {
     if (typeof text == "undefined") {
         throw new Error("INTERNAL: missing 'text' value for custom(text, [func])");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: custom() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: custom() cannot be called outside of a step.");
+    }
     var instruction = {
         type: "custom",
         text: text,
@@ -139,6 +186,12 @@ function custom(text, func) {
 function click(selector, regex, label) {
     if (typeof selector == "undefined") {
         throw new Error("INTERNAL: missing 'selector' value for click(selector, [regex], [label])");
+    }
+    if (!_test) {
+        throw new Error("INTERNAL: click() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: click() cannot be called outside of a step.");
     }
     // if you only provided two args, treat them as a selector and label.
     if (typeof label == "undefined") {
@@ -161,6 +214,12 @@ function observe(text, selector, label) {
     if (typeof text == "undefined") {
         throw new Error("INTERNAL: missing 'text' value for observe(text, [selector], [label])");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: observe() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: observe() cannot be called outside of a step.");
+    }
     var instruction = {
         type: "observe",
         text: text,
@@ -179,6 +238,12 @@ function note(text) {
     if (typeof text == "undefined") {
         throw new Error("INTERNAL: missing 'text' value for note(text)");
     }
+    if (!_test) {
+        throw new Error("INTERNAL: note() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: note() cannot be called outside of a step.");
+    }
     var lastInstruction = _instructions[_instructions.length - 1];
     if (lastInstruction) {
         lastInstruction.note = text;
@@ -192,6 +257,12 @@ function note(text) {
 function findElement(selector, regex, label) {
     if (typeof selector == "undefined") {
         throw new Error("INTERNAL: missing 'selector' value for findElement(selector, [regex], label)");
+    }
+    if (!_test) {
+        throw new Error("INTERNAL: findElement() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: findElement() cannot be called outside of a step.");
     }
     // if you only provided two args, treat them as a selector and label.
     if (typeof label == "undefined") {

@@ -26,6 +26,7 @@ a, code, em, img, small, strong, label {
     border-radius: 3px;
     box-shadow: rgba(0, 0, 0, 0.5) 0 2px 10px;
     font-size: 13px;
+    line-height: 1;
     z-index: 2147483647;
 }
 .cm_ui.left {
