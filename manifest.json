@@ -1,6 +1,6 @@
 {
     "name": "Checkmate",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Optimize manual QA. We can't make it fun, but we can make it fast, consistent, and 85% less boring.",
     "permissions": ["tabs", "webNavigation"],
     "background": {

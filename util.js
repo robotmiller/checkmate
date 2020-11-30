@@ -56,6 +56,16 @@ function getInputValue(element) {
     }
 }
 
+function getShadowRoots() {
+    var roots = [];
+    Array.from(document.querySelectorAll("*")).forEach(function(element) {
+        if (element.shadowRoot) {
+            roots.push(element.shadowRoot);
+        }
+    });
+    return roots;
+}
+
 function findElement(selector, regex) {
     if (regex && typeof regex == "string") {
         regex = eval(regex);
@@ -70,6 +80,21 @@ function findElement(selector, regex) {
             return elements[i];
         }
     }
+
+    // if we didn't find it, look for shadow roots and check inside them.
+    var shadowRoots = getShadowRoots();
+    for (var i = 0; i < shadowRoots.length; i++) {
+        var elements = shadowRoots[i].querySelectorAll(selector);
+        for (var j = 0; j < elements.length; j++) {
+            if (regex) {
+                if (regex.test(elements[j].textContent)) {
+                    return elements[j];
+                }
+            } else {
+                return elements[j];
+            }
+        }
+    }
 }
 
 function findElements(selector, regex) {
@@ -77,19 +102,33 @@ function findElements(selector, regex) {
         regex = eval(regex);
     }
     
-    return Array.from(document.querySelectorAll(selector)).filter(function(element) {
+    var elements = Array.from(document.querySelectorAll(selector)).filter(function(element) {
         if (regex) {
             return regex.test(element.textContent);
         } else {
             return true;
         }
     });
+
+    // check inside elements that are shadow roots.
+    getShadowRoots().forEach(function(shadowRoot) {
+        Array.from(shadowRoot.querySelectorAll(selector)).forEach(function(element) {
+            if (regex) {
+                if (regex.test(element.textContent)) {
+                    elements.push(element);
+                }
+            } else {
+                elements.push(element);
+            }
+        });
+    });
+    return elements;
 }
 
 // todo: this is very similar to findElement, figure out if we need both.
 function findElementWithText(selector, text) {
     if (selector) {
-        var elements = document.querySelectorAll(selector);
+        var elements = findElements(selector);
         var element = Array.from(elements).find(function(el) {
             return doesContainString(el.textContent, text);
         });
@@ -97,6 +136,7 @@ function findElementWithText(selector, text) {
             return element;
         }
     } else {
+        // todo: find elements inside shadow dom nodes.
         var elements = document.evaluate(".//text()", document.body, null, XPathResult.ANY_TYPE, null); 
         var element;
         while (element = elements.iterateNext()) {
