@@ -129,6 +129,7 @@ a {
 .instruction .note {
     font-size: 12px;
     color: #777;
+    position: relative;
 }
 [data-copy] {
     background: #e8e8f8;
