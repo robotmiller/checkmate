@@ -79,6 +79,27 @@ function navigate(url, label) {
     });
 }
 
+function incognito(url, label) {
+    if (typeof url == "undefined") {
+        throw new Error("INTERNAL: missing 'url' value for incognito(url, [label])");
+    }
+    if (!_test) {
+        throw new Error("INTERNAL: incognito() cannot be called outside of a test.");
+    }
+    if (!_instructions) {
+        throw new Error("INTERNAL: incognito() cannot be called outside of a step.");
+    }
+    // remove trailing slashes.
+    url = url.replace(/\/$/, "");
+    _instructions.push({
+        type: "navigate",
+        url: url,
+        incognito: true,
+        canDo: true,
+        label: label
+    });
+}
+
 function newTab(url, label) {
     if (typeof url == "undefined") {
         throw new Error("INTERNAL: missing 'url' value for newTab(url, [label])");
