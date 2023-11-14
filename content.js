@@ -352,11 +352,11 @@ register("custom", function(instruction, setStatus) {
     if (instruction.args.length) {
         setStatus("running");
         try {
-            func(callback);
             // if the callback isn't called within 5 seconds, assume it failed.
             timeout = setTimeout(function() {
                 setStatus("failed");
             }, 5000);
+            func(callback);
         } catch (e) {
             setStatus("failed");
         }
