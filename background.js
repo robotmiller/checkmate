@@ -223,7 +223,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                     clearTimeout(timeout);
                     setStatus(status);
                 });
-                
             });
 
             // if there's at least one iframe to try this in, wait up to 500ms to see if it succeeds.
