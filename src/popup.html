@@ -94,11 +94,11 @@
                 line-height: 16px;
                 resize: none;
             }
-            input:focus, textarea:focus, select:focus {
+            input:focus, iframe:focus, textarea:focus, select:focus {
                 border-color: #4a7;
                 box-shadow: rgba(128, 192, 128, 1) 0 2px 5px 1px;
             }
-            input.error, textarea.error, select.error {
+            input.error, iframe.error, textarea.error, select.error {
                 background: #fff4f4;
                 border-color: #c44;
                 box-shadow: rgba(224, 64, 64, 1) 0 2px 5px 1px;
@@ -188,7 +188,10 @@
             }
             #manifest-code {
                 height: 200px;
-                overflow: auto;
+                width: 100%;
+                border: 1px solid #444;
+                border-radius: 3px;
+                box-shadow: rgba(0, 0, 0, 0.3) 0 2px 5px;
             }
             .full-page #manifest-code {
                 height: calc(100vh - 200px);
@@ -390,7 +393,7 @@
             </label>
             <label>
                 Or paste the manifest's code here:
-                <textarea id="manifest-code" wrap="off" autocomplete="off" spellcheck="false" placeholder="test(&quot;My Test&quot;, () =&gt; {&#10;  step(&quot;Log in&quot;, () =&gt; {&#10;    type(&quot;user@example.com&quot;, &quot;#email&quot;);&#10;    type(&quot;abcd1234&quot;, &quot;#password&quot;);&#10;    click(&quot;button&quot;, /log in/i);&#10;  });&#10;});"></textarea>
+                <iframe id="manifest-code" src="https://robotmiller.com/checkmate/editor/?timestamp=123"></iframe>
                 <div id="manifest-error"></div>
             </label>
             <div class="center bottom-bar">

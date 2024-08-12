@@ -1,0 +1,13 @@
+{
+  "name": "checkmate",
+  "version": "1.0.6",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "build": "type src\\util.js src\\background.js src\\builders.js > src\\service-worker.js"
+  },
+  "devDependencies": {
+  },
+  "dependencies": {
+  }
+}

@@ -10,7 +10,7 @@ function hide(id) {
         element.classList.add("is-hidden");
         element.classList.remove("transparently");
     } else {
-        console.warn("couldn't find element #" + id);
+        // console.warn("couldn't find element #" + id);
     }
 }
 
@@ -103,49 +103,6 @@ function gotNewData(message) {
 
 chrome.runtime.sendMessage({ type: GET_STATE, isPopup: true }, gotNewData);
 
-function handleEvalError(e) {
-    // we can remove this because we'll add it before trying to eval again.
-    window.removeEventListener("error", handleEvalError);
-
-    _test = null;
-    _instructions = null;
-
-    var isInternal = /^.*INTERNAL:/.test(e.message);
-    var line, column, message;
-    if (isInternal) {
-        window.stack = e.stack;
-        window.error_obj = e;
-        message = e.message.replace(/^.*INTERNAL:\s*/, "");
-
-        // find the line this call was made from.
-        var parts = e.error.stack.split(/\n/g)[2].split(/:|\)/g);
-        line = +parts[parts.length - 3];
-        column = +parts[parts.length - 2];
-    } else {
-        line = typeof e.lineno == "number" ? e.lineno : e.lineNumber;
-        column = typeof e.colno == "number" ? e.colno : e.columnNumber;
-        message = e.message;
-    }
-
-    // highlight the error range.
-    var textarea = $("manifest-code");
-    var lines = textarea.value.split("\n");
-    var index = line - 1 + column;
-    for (var i = 1; i < line; i++) {
-        index += lines[i - 1].length;
-    }
-    textarea.focus();
-    textarea.setSelectionRange(index - 1, index);
-
-    var lineHeight = (textarea.scrollHeight - 10) / lines.length;
-    textarea.scrollTop = (line - 1) * lineHeight - lineHeight * 3 + 5;
-    textarea.scrollLeft = (column - 1) * 7 - 250;
-    showError(`Line ${line}, column ${column}: ${message}`, textarea);
-}
-
-// this is how we catch errors processing the manifest so
-// we can see the line number they happened on.
-
 function showError(message, element) {
     $("manifest-error").innerHTML = message;
     show("manifest-error");
@@ -160,62 +117,51 @@ function hideError() {
     $("manifest-code").classList.remove("error");
 }
 
+window.addEventListener("message", function(event) {
+    console.log("popup received message", event);
+
+    if (event.data.evalError) {
+        return showError(event.data.evalError);
+    } else if (event.data.evalSuccess) {
+        _tests = event.data.evalSuccess;
+
+        // if we reach this point, the eval worked.
+        chrome.runtime.sendMessage({
+            type: START_TEST,
+            state: {
+                testIndex: 0,
+                stepIndex: 0,
+                tests: _tests,
+                code: event.data.code,
+                url: (state && state.url) || ""
+            }
+        }, function(message) {
+            if (message.state && message.state.tests) {
+                hide("loading");
+                hide("test-form");
+                show("test-running");
+                $("test-status").textContent = `The test has started. Here are the tests we'll run:`;
+                state = message.state;
+                showTestDetails();
+            } else {
+                show("test-error");
+            }
+        });
+    }
+
+    
+});
+
 function processManifest(code) {
     _tests = [];
-    _usesFocus = false;
     
     // in case we had been showing an error, clear it.
     hideError();
 
-    // we can't do a try/catch here because that won't give us an accurate line number
-    // so instead we use this onerror listener.
-    window.addEventListener("error", handleEvalError);
-    eval(code);
-    window.removeEventListener("error", handleEvalError);
-
-    // if one or more tests have focus, remove all unfocused tests.
-    if (_usesFocus) {
-        _tests = _tests.filter(function(test) {
-            return test.focus;
-        });
-    }
-
-    // for each test that has focused steps, remove the unfocused steps.
-    _tests.forEach(function(test) {
-        if (test.usesFocus) {
-            test.steps = test.steps.filter(function(step) {
-                return step.focus;
-            });
-        }
-    });
-    
-    // check for the case where no tests got created.
-    if (!_tests.length) {
-        return showError("No tests were found.", $("manifest-code"));
-    }
-
-    // if we reach this point, the eval worked.
-    chrome.runtime.sendMessage({
-        type: START_TEST,
-        state: {
-            testIndex: 0,
-            stepIndex: 0,
-            tests: _tests,
-            code: code,
-            url: (state && state.url) || ""
-        }
-    }, function(message) {
-        if (message.state && message.state.tests) {
-            hide("loading");
-            hide("test-form");
-            show("test-running");
-            $("test-status").textContent = `The test has started. Here are the tests we'll run:`;
-            state = message.state;
-            showTestDetails();
-        } else {
-            show("test-error");
-        }
-    });
+    // the textarea is inside an iframe because we can't call eval() here.
+    // we can call it inside the iframe though, so we edit the code and run
+    // it there, then it'll call postMessage to pass back the test json.
+    $("manifest-code").contentWindow.postMessage({ compile: true }, "https://robotmiller.com");
 }
 
 function loadManifest(url) {
@@ -270,7 +216,7 @@ $("load-manifest").onclick = function() {
 };
 
 $("start-test").onclick = function() {
-    processManifest($("manifest-code").value);
+    processManifest();
 };
 
 $("record-test").onclick = function() {

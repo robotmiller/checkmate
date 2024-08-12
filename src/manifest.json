@@ -1,13 +1,13 @@
 {
     "name": "Checkmate",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Optimize manual QA. We can't make it fun, but we can make it fast, consistent, and 85% less boring.",
-    "permissions": ["tabs", "webNavigation"],
+    "permissions": ["storage", "tabs", "webNavigation"],
     "background": {
-        "scripts": ["util.js", "background.js", "builders.js"],
-        "persistent": true
+        "service_worker": "service-worker.js",
+        "type": "module"
     },
-    "browser_action": {
+    "action": {
         "default_popup": "popup.html",
         "default_icon": {
             "32": "circle-icon-32.png"
@@ -32,6 +32,8 @@
             "all_frames": true
         }
     ],
-    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-    "manifest_version": 2
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    },
+    "manifest_version": 3
 }

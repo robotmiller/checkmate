@@ -694,9 +694,11 @@ function gotNewData(message, isInitializingCall) {
     }
 }
 
-chrome.runtime.sendMessage({ type: GET_STATE }, function(message) {
-    gotNewData(message, true);
-});
 chrome.runtime.onMessage.addListener(function(message) {
     gotNewData(message, false);
+});
+
+chrome.runtime.sendMessage({ type: GET_STATE }, function(message) {
+    console.log("got state from background", message);
+    gotNewData(message, true);
 });
