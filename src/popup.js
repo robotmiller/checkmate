@@ -189,7 +189,7 @@ function processManifest(code) {
         }
     });
     
-    // todo: check for the case where no tests got created.
+    // check for the case where no tests got created.
     if (!_tests.length) {
         return showError("No tests were found.", $("manifest-code"));
     }
@@ -319,6 +319,10 @@ $("close-popup1").onclick = $("close-popup2").onclick = function() {
     window.close();
 };
 
+$("open-in-tab1").onclick = $("open-in-tab2").onclick = function() {
+    window.open("popup.html");
+};
+
 document.body.addEventListener("click", function(event) {
     if (event.target.hasAttribute("data-test")) {
         var testIndex = +event.target.getAttribute("data-test");
@@ -356,6 +360,22 @@ function handleMouseOut(event) {
 
 document.addEventListener("mouseover", handleMouseOver, false);
 document.addEventListener("mouseout", handleMouseOut, false);
+
+// this button copies the full report HTML to the clipboard.
+var copyReportTimeout;
+$("copy-report").onclick = function() {
+    // todo: make this take styling into account.
+    // todo: update the report so things copy more nicely.
+    copyHtml($("test-details").innerHTML);
+
+    if (copyReportTimeout) {
+        clearTimeout(copyReportTimeout);
+    }
+    copyReportTimeout = setTimeout(function() {
+        $("copy-report").innerHTML = "Copy to Clipboard";
+    }, 1000);
+    $("copy-report").innerHTML = "&check; Copied!";
+};
 
 if (window.innerWidth > 530) {
     document.body.className = "full-page";

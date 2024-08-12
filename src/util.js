@@ -82,6 +82,7 @@ function findElement(selector, regex) {
     }
 
     // if we didn't find it, look for shadow roots and check inside them.
+    // todo: make this handle nested shadow DOM nodes (probably not too important though).
     var shadowRoots = getShadowRoots();
     for (var i = 0; i < shadowRoots.length; i++) {
         var elements = shadowRoots[i].querySelectorAll(selector);
@@ -125,7 +126,7 @@ function findElements(selector, regex) {
     return elements;
 }
 
-// todo: this is very similar to findElement, figure out if we need both.
+// this is similar to findElement but works if there's no selector.
 function findElementWithText(selector, text) {
     if (selector) {
         var elements = findElements(selector);
@@ -242,6 +243,17 @@ function typeInElement(text, element, doPressEnter) {
         }
     }
     return true;
+}
+
+function copyHtml(html) {
+    function listener(e) {
+        e.clipboardData.setData("text/html", html);
+        e.clipboardData.setData("text/plain", html);
+        e.preventDefault();
+    }
+    document.addEventListener("copy", listener);
+    document.execCommand("copy");
+    document.removeEventListener("copy", listener);
 }
 
 function copyText(text) {
