@@ -148,18 +148,28 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         chrome.tabs.query({}, function(tabs) {
             for (var i = 0; i < tabs.length; i++) {
                 if (doesContainString(tabs[i].url, message.url)) {
-                    chrome.tabs.highlight({
-                        windowId: tabs[i].windowId,
-                        tabs: [tabs[i].index],
+                    chrome.windows.update(tabs[i].windowId, {
+                        focused: true
                     }, function() {
-                        state.tests[message.testIndex].steps[message.stepIndex].instructions[message.instructionIndex].status = "success";
-                        updateAllTabs();
+                        chrome.tabs.highlight({
+                            windowId: tabs[i].windowId,
+                            tabs: [tabs[i].index],
+                        }, function() {
+                            state.tests[message.testIndex].steps[message.stepIndex].instructions[message.instructionIndex].status = "success";
+                            updateAllTabs();
+                        });
                     });
                     return;
                 }
             }
             state.tests[message.testIndex].steps[message.stepIndex].instruction[instructionIndex].status = "failed";
             updateAllTabs();
+        });
+    } else if (message.type == OPEN_IN_INCOGNITO) {
+        chrome.windows.create({
+            url: message.url,
+            focused: true,
+            incognito: true
         });
     } else if (message.type == SET_STEP) {
         state.testIndex = message.testIndex;
@@ -213,7 +223,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
                     clearTimeout(timeout);
                     setStatus(status);
                 });
-                
             });
 
             // if there's at least one iframe to try this in, wait up to 500ms to see if it succeeds.

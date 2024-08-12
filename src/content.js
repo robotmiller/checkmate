@@ -243,11 +243,21 @@ function doInstruction(instructionIndex) {
     }
 }
 
-register("navigate", function(instruction, setStatus) {
+register("navigate", function(instruction, setStatus, instructionIndex) {
     setStatus("success");
-    setTimeout(function() {
-        location.href = instruction.url;
-    }, 100);
+    if (instruction.incognito) {
+        chrome.runtime.sendMessage({
+            type: OPEN_IN_INCOGNITO,
+            url: instruction.url,
+            testIndex: state.testIndex,
+            stepIndex: state.stepIndex,
+            instructionIndex: instructionIndex
+        });
+    } else {
+        setTimeout(function() {
+            location.href = instruction.url;
+        }, 100);
+    }
 });
 
 register("new-tab", function(instruction, setStatus) {
@@ -342,11 +352,11 @@ register("custom", function(instruction, setStatus) {
     if (instruction.args.length) {
         setStatus("running");
         try {
-            func(callback);
             // if the callback isn't called within 5 seconds, assume it failed.
             timeout = setTimeout(function() {
                 setStatus("failed");
             }, 5000);
+            func(callback);
         } catch (e) {
             setStatus("failed");
         }
@@ -524,7 +534,7 @@ function handleMouseOver(event) {
 function handleMouseOut(event) {
     if (event.fromElement.hasAttribute("data-highlight")) {
         // if you're still inside the same data-highlight element, ignore this event.
-        if (event.fromElement.closest("[data-highlight]") == event.toElement.closest("[data-highlight]")) {
+        if (event.fromElement && event.toElement && event.fromElement.closest("[data-highlight]") == event.toElement.closest("[data-highlight]")) {
             return;
         }
         var instruction = getInstruction(+event.target.getAttribute("data-highlight"));

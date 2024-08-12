@@ -2,6 +2,7 @@
 var GET_STATE = "GET_STATE";
 var SET_STATE = "SET_STATE";
 var SWITCH_TAB = "SWITCH_TAB";
+var OPEN_IN_INCOGNITO = "OPEN_IN_INCOGNITO";
 var SET_STEP = "SET_STEP";
 var START_TEST = "START_TEST";
 var STOP_TEST = "STOP_TEST";
@@ -375,7 +376,11 @@ function buildInstructionHtml(instruction, index, addDoItButton) {
     var text = instruction.text;
 
     if (type == "navigate") {
-        content = `Navigate to <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a>`;
+        if (instruction.incognito) {
+            content = `Open <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a> in an incognito window.`;
+        } else {
+            content = `Navigate to <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a>`;
+        }
     } else if (type == "new-tab") {
         content = `Open <a href="${url}" onclick="return false;">${label || formatUrl(url)}</a> in a new tab.`;
     } else if (type == "switch-tab") {
